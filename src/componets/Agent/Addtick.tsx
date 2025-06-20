@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useAppData } from "../../api/useAppData";
+import { useUsersWithStats } from "../../api/getusers";
 import type { Ticket } from "../../types";
 import { useAuth } from "../../context/AuthContext";
 
@@ -15,6 +15,7 @@ export default function AddTicketForm({
   const [form, setForm] = useState({
     ticketNumber: "",
     agentId: "",
+    selectedUserId: "", // المستخدم المختار
     paidAmount: "" as string,
     amountDue: "" as string,
     isPaid: false,
@@ -23,15 +24,26 @@ export default function AddTicketForm({
   const [loading, setLoading] = useState(false);
 
   const { createTicket, agentsQuery, updateAgentBalance } = useAppData();
+  const { data: users } = useUsersWithStats(); // جلب قائمة المستخدمين
+  const { user } = useAuth();
+
+  // التحقق من أن المستخدم هو أدمن
+  if (user?.role !== "admin") {
+    return null; // لا يظهر المكون إذا لم يكن أدمن
+  }
 
   const handleSubmit = async () => {
-    if (!form.ticketNumber || !form.agentId)
-      return toast.error("يرجى تعبئة جميع الحقول");
+    if (!form.ticketNumber || !form.agentId || !form.selectedUserId) {
+      return toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+    }
+
+    if (!form.paidAmount || !form.amountDue) {
+      return toast.error("يرجى إدخال المبالغ المطلوبة");
+    }
 
     setLoading(true);
     try {
       console.log("Form Data: ", form);
-      console.log("User ID: ", userId);
 
       // ✅ الحصول على بيانات الوكيل المختار
       const agent = agentsQuery.data?.find((a) => a.id === form.agentId);
@@ -41,32 +53,29 @@ export default function AddTicketForm({
         return;
       }
 
+      // ✅ حساب الرصيد الجديد (يمكن أن يكون سالب)
       const newBalance = agent.balance - Number(form.paidAmount);
-      if (newBalance < 0) {
-        toast.error("رصيد البائع غير كافٍ");
-        setLoading(false);
-        return;
-      }
 
-      // ✅ إضافة التذكرة
+      // ✅ إضافة التذكرة مع معرف المستخدم المختار
       await createTicket.mutateAsync({
         ...form,
         createdAt: new Date().toISOString(),
-        createdByUserId: userId,
+        createdByUserId: form.selectedUserId, // استخدام المستخدم المختار
       } as unknown as Omit<Ticket, "id">);
 
-      // ✅ خصم الرصيد من الوكيل
+      // ✅ تحديث رصيد الوكيل (حتى لو أصبح سالب)
       await updateAgentBalance.mutateAsync({
         id: agent.id,
         newBalance,
       });
 
-      toast.success("✅ تم إضافة التذكرة وخصم الرصيد بنجاح!");
+      toast.success("✅ تم إضافة التذكرة وتحديث الرصيد بنجاح!");
 
       // ✅ إعادة تعيين النموذج
       setForm({
         ticketNumber: "",
         agentId: "",
+        selectedUserId: "",
         paidAmount: "",
         amountDue: "",
         isPaid: false,
@@ -78,12 +87,11 @@ export default function AddTicketForm({
       setLoading(false);
     }
   };
-  const { user } = useAuth();
+
   useEffect(() => {
-    if (user?.role === "admin") {
-      setForm((prev) => ({ ...prev, isPaid: true }));
-    }
-  }, [user]);
+    // الأدمن دائماً يضع التذاكر كمدفوعة للإدارة
+    setForm((prev) => ({ ...prev, isPaid: true }));
+  }, []);
 
   return (
     <motion.div
@@ -91,8 +99,11 @@ export default function AddTicketForm({
       animate={{ opacity: 1, y: 0 }}
       className="bg-white p-4 rounded-xl shadow-md space-y-3"
     >
-      <h2 className="text-lg font-bold text-right">إضافة تذكرة جديدة</h2>
+      <h2 className="text-lg font-bold text-right text-blue-600">
+        إضافة تذكرة جديدة (الأدمن فقط)
+      </h2>
 
+      {/* رقم التذكرة */}
       <input
         type="text"
         placeholder="رقم التذكرة"
@@ -101,8 +112,25 @@ export default function AddTicketForm({
         className="input bg-blue-100 input-bordered w-full text-right"
       />
 
+      {/* اختيار المستخدم */}
       <select
-        className="select bg-blue-100  select-bordered w-full text-right"
+        className="select bg-blue-100 select-bordered w-full text-right"
+        value={form.selectedUserId}
+        onChange={(e) => setForm({ ...form, selectedUserId: e.target.value })}
+      >
+        <option disabled value="">
+          اختر المستخدم
+        </option>
+        {users?.map((user) => (
+          <option key={user.id} value={user.id}>
+            {user.name} ({user.role === "admin" ? "مدير" : "وكيل"})
+          </option>
+        ))}
+      </select>
+
+      {/* اختيار البائع */}
+      <select
+        className="select bg-blue-100 select-bordered w-full text-right"
         value={form.agentId}
         onChange={(e) => setForm({ ...form, agentId: e.target.value })}
       >
@@ -111,14 +139,15 @@ export default function AddTicketForm({
         </option>
         {agentsQuery.data?.map((agent) => (
           <option key={agent.id} value={agent.id}>
-            {agent.name}
+            {agent.name} (الرصيد: {agent.balance.toLocaleString("en-US")} ر.س)
           </option>
         ))}
       </select>
 
+      {/* المبالغ */}
       <div className="flex flex-col gap-2">
-        <div className="grid grid-cols-2 ">
-          <h1 className=" text-center">المدفوع من المحفظة</h1>
+        <div className="grid grid-cols-2">
+          <h1 className="text-center">المدفوع من المحفظة</h1>
           <input
             type="text"
             placeholder=""
@@ -126,20 +155,20 @@ export default function AddTicketForm({
             value={
               form.paidAmount === ""
                 ? ""
-                : Number(form.paidAmount).toLocaleString("en-US") // عرض مع فاصلة
+                : Number(form.paidAmount).toLocaleString("en-US")
             }
             onChange={(e) => {
-              const raw = e.target.value.replace(/,/g, ""); // إزالة الفواصل
-              // فقط أرقام أو فراغ
+              const raw = e.target.value.replace(/,/g, "");
               if (/^\d*$/.test(raw)) {
                 const selectedAgent = agentsQuery.data?.find(
                   (agent) => agent.id === form.agentId
                 );
+                
+                // إظهار تحذير إذا كان المبلغ سيجعل الرصيد سالب
                 if (selectedAgent && Number(raw) > selectedAgent.balance) {
+                  const newBalance = selectedAgent.balance - Number(raw);
                   toast.warn(
-                    `⚠️ الرصيد المتاح: ${selectedAgent.balance.toLocaleString(
-                      "en-US"
-                    )}`
+                    `⚠️ سيصبح رصيد البائع: ${newBalance.toLocaleString("en-US")} ر.س`
                   );
                 }
 
@@ -149,11 +178,12 @@ export default function AddTicketForm({
             className="rounded-lg h-8 border-blue-300 bg-blue-100 w-full text-center font-bold"
           />
         </div>
-        <div className="grid grid-cols-2 ">
-          <h1 className=" text-center"> المستحق </h1>
+        
+        <div className="grid grid-cols-2">
+          <h1 className="text-center">المستحق</h1>
           <input
             type="text"
-            placeholder=" "
+            placeholder=""
             inputMode="numeric"
             value={
               form.amountDue === ""
@@ -171,23 +201,30 @@ export default function AddTicketForm({
         </div>
       </div>
 
+      {/* حالة الدفع - مقفلة للأدمن */}
       <label className="label cursor-pointer justify-end gap-4">
         تم التسديد للإدارة
         <input
           type="checkbox"
           className="checkbox text-blue-400 mx-2"
-          checked={user?.role === "admin" ? true : form.isPaid}
-          disabled={user?.role === "admin"} // منع التغيير إذا كان admin
-          onChange={(e) =>
-            !user?.role || user?.role !== "admin" // السماح بالتعديل فقط لغير الـ admin
-              ? setForm({ ...form, isPaid: e.target.checked })
-              : null
-          }
+          checked={true} // دائماً true للأدمن
+          disabled={true} // مقفل للأدمن
         />
       </label>
 
+      {/* معلومات إضافية */}
+      <div className="bg-blue-50 p-3 rounded-lg text-sm">
+        <p className="text-blue-700 font-semibold">ملاحظة:</p>
+        <p className="text-blue-600">
+          • يمكن للبائع أن يصبح رصيده بالسالب
+        </p>
+        <p className="text-blue-600">
+          • التذاكر المضافة من الأدمن تعتبر مدفوعة تلقائياً
+        </p>
+      </div>
+
       <button
-        className="bg-blue-500 rounded-xl my-3 w-full"
+        className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl py-3 w-full font-bold transition-colors"
         onClick={handleSubmit}
         disabled={loading}
       >
