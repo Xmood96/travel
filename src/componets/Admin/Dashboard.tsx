@@ -339,38 +339,36 @@ const Dashboard = () => {
         </div>
 
         {agentsQuery.data?.map((agent) => (
-          <>
-            <Card className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Plane className="w-6 h-6 text-blue-500" />{" "}
-                {/* أيقونة الطائرة */}
-                <div>
-                  <h4 className="font-bold">{agent.name}</h4>
-                  <p className="text-sm text-gray-500">
-                    رصيد: {agent.balance} ر.س
-                  </p>
-                </div>
+          <Card key={agent.id} className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Plane className="w-6 h-6 text-blue-500" />{" "}
+              {/* أيقونة الطائرة */}
+              <div>
+                <h4 className="font-bold">{agent.name}</h4>
+                <p className="text-sm text-gray-500">
+                  رصيد: {agent.balance} ر.س
+                </p>
               </div>
-              <div className="gap-4 flex">
-                <button
-                  className="text-blue-500 text-sm"
-                  onClick={() => {
-                    setAddModalOpen2(true);
-                    setcurrentid(agent.id);
-                  }}
-                >
-                  تحديث الرصيد
-                </button>
-                <button
-                  className="text-red-500 text-sm flex items-center gap-1"
-                  onClick={() => setAgentToDelete(agent.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  حذف
-                </button>
-              </div>
-            </Card>
-          </>
+            </div>
+            <div className="gap-4 flex">
+              <button
+                className="text-blue-500 text-sm"
+                onClick={() => {
+                  setAddModalOpen2(true);
+                  setcurrentid(agent.id);
+                }}
+              >
+                تحديث الرصيد
+              </button>
+              <button
+                className="text-red-500 text-sm flex items-center gap-1"
+                onClick={() => setAgentToDelete(agent.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+                حذف
+              </button>
+            </div>
+          </Card>
         ))}
       </div>
 
