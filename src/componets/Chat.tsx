@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { MessageCircle, SendHorizonal } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MessageCircle, SendHorizonal, Star, Smile } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -25,6 +25,8 @@ type MessageType = {
   senderPhoto: string;
   reactions?: { [userId: string]: string };
   seenBy?: string[];
+  isStarred?: boolean;
+  starredBy?: string[];
   replyTo?: {
     id: string;
     text: string;
@@ -46,13 +48,16 @@ const Chat = () => {
     text: string;
     senderName: string;
   }>(null);
+  const [showStarredMessages, setShowStarredMessages] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // جلب الرسائل
   useEffect(() => {
     const q = query(
       collection(db, "chat"),
       orderBy("createdAt", "desc"),
-      limitToLast(limit)
+      limitToLast(limit),
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs: MessageType[] = snapshot.docs.map((doc) => ({
@@ -65,7 +70,7 @@ const Chat = () => {
         const unread = msgs.filter(
           (msg) =>
             msg.senderId !== user.id &&
-            (!msg.seenBy || !msg.seenBy.includes(user.id))
+            (!msg.seenBy || !msg.seenBy.includes(user.id)),
         ).length;
 
         if (!open) setUnreadCount(unread);
@@ -163,8 +168,9 @@ const Chat = () => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex ${msg.senderId === user?.id ? "justify-end" : "justify-start"
-                  }`}
+                className={`flex ${
+                  msg.senderId === user?.id ? "justify-end" : "justify-start"
+                }`}
               >
                 <div className="flex items-end gap-2 max-w-[75%]">
                   {msg.senderId !== user?.id && (
@@ -183,9 +189,10 @@ const Chat = () => {
                       })
                     }
                     className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow relative cursor-pointer
-                      ${msg.senderId === user?.id
-                        ? "bg-blue-300 text-black rounded-br-none"
-                        : "bg-gray-200 text-gray-900 rounded-bl-none"
+                      ${
+                        msg.senderId === user?.id
+                          ? "bg-blue-300 text-black rounded-br-none"
+                          : "bg-gray-200 text-gray-900 rounded-bl-none"
                       }`}
                   >
                     {msg.replyTo && (
