@@ -139,7 +139,7 @@ export const logTicketCreated = async (
       action: "ticket_created",
       performedBy,
       performedByName,
-      description: `تم إنشاء التذكرة بو����طة ${performedByName}`,
+      description: `تم إنشاء التذكرة بوا��طة ${performedByName}`,
     }),
   ]);
 };
@@ -501,6 +501,9 @@ export const getActionIcon = (action: LogActionType): string => {
     currency_created: "💱➕",
     currency_updated: "💱✏️",
     currency_deleted: "💱🗑️",
+    service_created: "🛎️➕",
+    service_updated: "🛎️✏️",
+    service_deleted: "🛎️🗑️",
   };
 
   return icons[action] || "📝";
