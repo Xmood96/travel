@@ -76,40 +76,29 @@ export default function AddTicketForm() {
     if (form.serviceId) {
       const service = services.find((s) => s.id === form.serviceId);
       setSelectedService(service || null);
-      // Reset amount due when changing service
-      if (service) {
-        const selectedCurrency = getCurrencyByCode(form.currency);
-        if (selectedCurrency) {
-          // Convert service price from USD to selected currency
-          const serviceAmountInCurrency = Math.ceil(
-            service.price * selectedCurrency.exchangeRate,
-          );
+    } else {
+      setSelectedService(null);
+    }
+  }, [form.serviceId, services]);
+
+  // Update service price when currency or service changes
+  useEffect(() => {
+    if (formType === "service" && selectedService && form.currency) {
+      const selectedCurrency = getCurrencyByCode(form.currency);
+      if (selectedCurrency) {
+        const serviceAmountInCurrency = Math.ceil(
+          selectedService.price * selectedCurrency.exchangeRate,
+        );
+        // Only update if the amount is actually different to prevent loops
+        if (form.amountDue !== serviceAmountInCurrency.toString()) {
           setForm((prev) => ({
             ...prev,
             amountDue: serviceAmountInCurrency.toString(),
           }));
         }
       }
-    } else {
-      setSelectedService(null);
     }
-  }, [form.serviceId, services, form.currency, getCurrencyByCode]);
-
-  // Update service price when currency changes
-  useEffect(() => {
-    if (formType === "service" && selectedService) {
-      const selectedCurrency = getCurrencyByCode(form.currency);
-      if (selectedCurrency) {
-        const serviceAmountInCurrency = Math.ceil(
-          selectedService.price * selectedCurrency.exchangeRate,
-        );
-        setForm((prev) => ({
-          ...prev,
-          amountDue: serviceAmountInCurrency.toString(),
-        }));
-      }
-    }
-  }, [form.currency, selectedService, formType, getCurrencyByCode]);
+  }, [formType, selectedService, form.currency]); // Removed getCurrencyByCode and form.amountDue from deps
 
   // التحقق من الصلاحيات - يمكن للأدمن والعميل الوصول
   if (!user || (user.role !== "admin" && user.role !== "agent")) {
@@ -170,7 +159,7 @@ export default function AddTicketForm() {
     try {
       console.log("Form Data: ", form);
 
-      // الحصول على بيانات الوكيل المختار
+      // الحصول عل�� بيانات الوكيل المختار
       const agent = agentsQuery.data?.find((a) => a.id === form.agentId);
       if (!agent) {
         toast.error("لم يتم العثور على البائع المحدد");
@@ -246,7 +235,7 @@ export default function AddTicketForm() {
         );
       }
 
-      // تحديث رصيد الوكيل (حتى لو أصبح سالب)
+      // تحد��ث رصيد الوكيل (حتى لو أصبح سالب)
       await updateAgentBalance.mutateAsync({
         id: agent.id,
         newBalance,
