@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  Briefcase,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
