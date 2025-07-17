@@ -322,7 +322,7 @@ export default function AddTicketForm() {
               : "text-gray-600 hover:text-gray-900"
           }`}
         >
-          <TicketSquare className="w-4 h-4" />
+          <Square className="w-4 h-4" />
           تذكرة
         </button>
         <button
@@ -405,7 +405,7 @@ export default function AddTicketForm() {
             setForm({
               ...form,
               selectedUserId: e.target.value,
-              // إذا كان المستخد�� المحدد أدمن، جعل التذكرة مدفوعة تلقائياً
+              // إذا كان المستخدم المحدد أد��ن، جعل التذكرة مدفوعة تلقائياً
               isPaid: selectedUser?.role === "admin" ? true : form.isPaid,
             });
           }}
@@ -604,7 +604,7 @@ export default function AddTicketForm() {
         {user?.role === "admin" && (
           <>
             <p className="text-blue-600">
-              • {formType === "service" ? "الخدمات" : "التذاكر"} المحررة من قبل
+              • {formType === "service" ? "الخدمات" : "التذاكر"} المحررة م�� قبل
               الأدمن تُعتبر مدفوعة تلقائياً
             </p>
             <p className="text-blue-600">
