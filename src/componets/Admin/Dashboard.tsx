@@ -338,7 +338,7 @@ const Dashboard = () => {
                   <StatCard
                     title="إجمالي المستخدمين"
                     value={totalUsers}
-                    subtitle={`أصدروا ${totalTickets} تذكرة`}
+                    subtitle={`أصدروا ${totalTickets} تذكرة وخدمة`}
                     icon={<Users className="w-6 h-6 text-white" />}
                     gradient="bg-gradient-to-r from-blue-500 to-blue-600"
                     textColor="text-blue-600"
