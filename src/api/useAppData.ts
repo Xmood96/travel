@@ -60,10 +60,12 @@ export const useAppData = () => {
     queryKey: ["usersWithStats"],
     queryFn: async () => {
       return withRetry(async () => {
-        const [usersSnapshot, ticketsSnapshot] = await Promise.all([
-          getDocs(usersCollection),
-          getDocs(ticketsCollection),
-        ]);
+        const [usersSnapshot, ticketsSnapshot, serviceTicketsSnapshot] =
+          await Promise.all([
+            getDocs(usersCollection),
+            getDocs(ticketsCollection),
+            getDocs(collection(db, "serviceTickets")),
+          ]);
 
         const users = usersSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -80,7 +82,7 @@ export const useAppData = () => {
             (t) => t.createdByUserId === user.id,
           );
 
-          // حساب المبلغ غير المدفوع مع مراعاة الدفع الجزئي
+          // حس��ب المبلغ غير المدفوع مع مراعاة الدفع الجزئي
           const unpaidAmount = userTickets
             .filter((t) => !t.isPaid)
             .reduce((sum, t) => {
