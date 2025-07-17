@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 
 import { useAppData } from "../../api/useAppData";
+import { getServiceTickets } from "../../api/serviceService";
+import { useQuery } from "@tanstack/react-query";
 import { Modal, ConfirmationModal } from "../ui/modal";
 import { Button } from "../ui/botom";
 import { toast } from "react-toastify";
