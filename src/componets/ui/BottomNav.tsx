@@ -1,6 +1,21 @@
-import { Home, Users, Ticket, Settings, Activity, User } from "lucide-react";
+import {
+  Home,
+  Users,
+  Ticket,
+  Settings,
+  Activity,
+  User,
+  Briefcase,
+} from "lucide-react";
 
-type Tab = "dashboard" | "users" | "tickets" | "settings" | "logs" | "profile";
+type Tab =
+  | "dashboard"
+  | "users"
+  | "tickets"
+  | "services"
+  | "settings"
+  | "logs"
+  | "profile";
 
 interface BottomNavProps {
   currentTab: Tab;
