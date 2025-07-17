@@ -77,12 +77,17 @@ export const useAppData = () => {
           ...doc.data(),
         })) as Ticket[];
 
+        const serviceTickets = serviceTicketsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as any[];
+
         return users.map((user) => {
           const userTickets = tickets.filter(
             (t) => t.createdByUserId === user.id,
           );
 
-          // حس��ب المبلغ غير المدفوع مع مراعاة الدفع الجزئي
+          // حساب المبلغ غير المدفوع مع مراعاة الدفع الجزئي
           const unpaidAmount = userTickets
             .filter((t) => !t.isPaid)
             .reduce((sum, t) => {
