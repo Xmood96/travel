@@ -140,7 +140,7 @@ export default function AddTicketForm() {
   const handleSubmit = async () => {
     // التحقق من الحقول المطلوبة بناء على نوع المستخدم
     if (!form.ticketNumber) {
-      return toast.error("يرجى تعبئة رقم التذكرة/الخدمة");
+      return toast.error("يرجى تعبئة رقم التذكرة/الخد��ة");
     }
 
     // For regular tickets, agent ID is required, for services it's auto-set to current user
@@ -433,21 +433,23 @@ export default function AddTicketForm() {
         </select>
       )}
 
-      {/* اختيار البائع */}
-      <select
-        className="select bg-blue-100 text-black select-bordered w-full text-right"
-        value={form.agentId}
-        onChange={(e) => setForm({ ...form, agentId: e.target.value })}
-      >
-        <option disabled value="">
-          اختر البائع
-        </option>
-        {agentsQuery.data?.map((agent) => (
-          <option key={agent.id} value={agent.id}>
-            {agent.name} (الرصيد: {agent.balance.toLocaleString("en-US")} USD)
+      {/* اختيار البائع - للتذاكر فقط */}
+      {formType === "ticket" && (
+        <select
+          className="select bg-blue-100 text-black select-bordered w-full text-right"
+          value={form.agentId}
+          onChange={(e) => setForm({ ...form, agentId: e.target.value })}
+        >
+          <option disabled value="">
+            اختر البائع
           </option>
-        ))}
-      </select>
+          {agentsQuery.data?.map((agent) => (
+            <option key={agent.id} value={agent.id}>
+              {agent.name} (الرصيد: {agent.balance.toLocaleString("en-US")} USD)
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* المبالغ */}
       <div className="flex flex-col gap-2">
