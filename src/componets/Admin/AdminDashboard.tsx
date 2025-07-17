@@ -13,7 +13,13 @@ import { useAuth } from "../../context/AuthContext";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<
-    "dashboard" | "users" | "tickets" | "settings" | "logs" | "profile"
+    | "dashboard"
+    | "users"
+    | "tickets"
+    | "services"
+    | "settings"
+    | "logs"
+    | "profile"
   >("dashboard");
   const renderContent = () => {
     switch (currentTab) {
