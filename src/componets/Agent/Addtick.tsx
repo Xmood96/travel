@@ -167,7 +167,7 @@ export default function AddTicketForm() {
     }
 
     if (!form.paidAmount || !form.amountDue) {
-      return toast.error("يرجى إدخال المبالغ المطلوبة");
+      return toast.error("يرجى إدخال المبالغ المطلو��ة");
     }
 
     // For services, check if service is selected and amount is valid
@@ -196,7 +196,7 @@ export default function AddTicketForm() {
 
       // الحصول عل�� بيانات الوكيل ��لمختار
       // For services, use current user as agent, for tickets use selected agent
-      const agentId = formType === "service" ? user?.id || "" : form.agentId;
+      const agentId = formType === "service" ? user.id : form.agentId;
       const agent = agentsQuery.data?.find((a) => a.id === agentId);
       if (!agent) {
         toast.error(
@@ -390,7 +390,7 @@ export default function AddTicketForm() {
           </option>
           {services.map((service) => (
             <option key={service.id} value={service.id}>
-              {service.name} (السعر الأساسي: ${service.price})
+              {service.name} (السع�� الأساسي: ${service.price})
             </option>
           ))}
         </select>
