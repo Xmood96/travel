@@ -24,7 +24,7 @@ import Dashboard from "../../componets/Admin/Dashboard"; // Keep the existing da
 import { ModernCard } from "../ui/modern/Card";
 import { IconButton } from "../ui/modern/Button";
 
-type TabType = "dashboard" | "users" | "tickets" | "settings";
+type TabType = "dashboard" | "users" | "tickets" | "services" | "settings";
 
 interface Tab {
   id: TabType;
