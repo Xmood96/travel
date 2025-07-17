@@ -135,7 +135,7 @@ export default function ServiceTickets() {
       };
 
       await updateDoc(doc(db, "serviceTickets", selectedTicket.id), updates);
-      toast.success("تم تحديث تذك��ة الخدمة بنجاح!");
+      toast.success("تم تحديث تذكرة الخدمة بنجاح!");
       setEditModalOpen(false);
       setSelectedTicket(null);
       loadServiceTickets();
@@ -156,13 +156,6 @@ export default function ServiceTickets() {
 
   const getUserName = (userId: string) => {
     return users?.find((user) => user.id === userId)?.name || "غير معروف";
-  };
-
-  const getServiceName = (serviceId: string) => {
-    return (
-      services.find((service) => service.id === serviceId)?.name ||
-      "خدمة محذوفة"
-    );
   };
 
   const filteredTickets = serviceTickets.filter((ticket) => {
