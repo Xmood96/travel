@@ -52,7 +52,6 @@ export default function ServiceTickets() {
 
   const { data: users } = useUsersWithStats();
   const { agentsQuery } = useAppData();
-  const { data: currencies } = useCurrencies();
   const { getFormattedBalance } = useCurrencyUtils();
 
   const [editForm, setEditForm] = useState({
@@ -136,7 +135,7 @@ export default function ServiceTickets() {
       };
 
       await updateDoc(doc(db, "serviceTickets", selectedTicket.id), updates);
-      toast.success("تم تحديث تذكرة الخدمة بنجاح!");
+      toast.success("تم تحديث تذك��ة الخدمة بنجاح!");
       setEditModalOpen(false);
       setSelectedTicket(null);
       loadServiceTickets();
