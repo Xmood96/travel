@@ -70,10 +70,13 @@ export default function AdminLogs() {
       user_updated: "تحديث مستخدم",
       user_deleted: "حذف مستخدم",
       user_balance_updated: "تحديث رصيد مستخدم",
-      user_debt_paid_from_balance: "دفع دين من رصيد مستخدم",
+      user_debt_paid_from_balance: "��فع دين من رصيد مستخدم",
       currency_created: "إضافة عملة",
       currency_updated: "تحديث عملة",
       currency_deleted: "حذف عملة",
+      service_created: "إضافة خدمة",
+      service_updated: "تحديث خدمة",
+      service_deleted: "حذف خدمة",
     };
 
     return actionNames[action] || action;
