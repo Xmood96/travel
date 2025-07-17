@@ -48,7 +48,7 @@ export default function AddTicketForm() {
         setServices(servicesData);
       } catch (error) {
         console.error("Error loading services:", error);
-        toast.error("فشل في تحميل الخدمات");
+        toast.error("فشل في تح��يل الخدمات");
       }
     };
     loadServices();
@@ -121,7 +121,7 @@ export default function AddTicketForm() {
     );
   }
 
-  // عرض خطأ إذا فشل تحميل البيانات
+  // عرض ��طأ إذا فشل تحميل البيانات
   if (agentsQuery.error) {
     return (
       <motion.div
@@ -193,17 +193,32 @@ export default function AddTicketForm() {
   }, [formType, selectedService, form.currency, user?.id]);
 
   const handleSubmit = async () => {
+    console.log("=== بدء معالجة النموذج ===");
+    console.log("Form Type:", formType);
+    console.log("User:", user);
+    console.log("Agents Query Loading:", agentsQuery.isLoading);
+    console.log("Agents Query Error:", agentsQuery.error);
+    console.log("Agents Query Data:", agentsQuery.data);
+
     // التحقق من تحميل البيانات المطلوبة
     if (agentsQuery.isLoading) {
+      console.log("خطأ: لا يزال تحميل بيانات الوكلاء");
       return toast.error("جار تحميل بيانات الوكلاء، يرجى الانتظار...");
     }
 
     if (!user) {
+      console.log("خطأ: لا يوجد مستخدم مسجل دخول");
       return toast.error("يرجى تسجيل الدخول أولاً");
     }
 
+    if (agentsQuery.error) {
+      console.log("خطأ: فشل في تحميل بيانات الوكلاء:", agentsQuery.error);
+      return toast.error("فشل في تحميل بيانات الوكلاء. يرجى إعادة المحاولة.");
+    }
+
     if (!agentsQuery.data || agentsQuery.data.length === 0) {
-      return toast.error("لا توجد بيانات وكلاء متاحة");
+      console.log("خطأ: لا توجد بيانات وكلاء");
+      return toast.error("لا توجد بيانات وكلاء متاحة. يرجى إضافة وكلاء أولاً.");
     }
 
     // التحقق من الحقول المطلوبة بناء على نوع المستخدم
@@ -718,17 +733,17 @@ export default function AddTicketForm() {
             </p>
             <p className="text-green-600">
               • <strong>للخدمات:</strong> المبلغ المستحق يجب أن يكون أكبر من أو
-              يساوي سعر الخدمة الأساسي
+              يساوي سعر ال��دمة الأساسي
             </p>
             <p className="text-green-600">
               • <strong>للخدمات:</strong> يتم تعيين المستخدم الحالي كبائع
-              تلقائي��ً
+              تلقائياً
             </p>
           </>
         )}
         {formType === "ticket" && (
           <p className="text-blue-600">
-            • <strong>للتذاكر:</strong> يجب اختيار البائع ومبلغ الدفع من محفظته
+            • <strong>للتذاكر:</strong> يجب اختيار البائع ومبلغ الدفع من م��فظته
           </p>
         )}
         <p className="text-green-600">
