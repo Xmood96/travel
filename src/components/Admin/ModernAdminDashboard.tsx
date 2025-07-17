@@ -58,24 +58,16 @@ export default function ModernAdminDashboard() {
       component: <ModernTickets />,
     },
     {
+      id: "services",
+      label: "إدارة الخدمات",
+      icon: <Briefcase size={20} />,
+      component: <ServiceTickets />,
+    },
+    {
       id: "settings",
       label: "الإعدادات",
       icon: <Settings size={20} />,
-      component: (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-          <ModernCard variant="glass" size="lg" padding="lg">
-            <div className="text-center">
-              <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                صفحة الإعدادات
-              </h3>
-              <p className="text-gray-600">
-                سيتم إضافة إعدادات النظام هنا قريباً
-              </p>
-            </div>
-          </ModernCard>
-        </div>
-      ),
+      component: <SettingsComponent />,
     },
   ];
 
