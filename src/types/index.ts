@@ -87,7 +87,10 @@ export type LogActionType =
   | "user_debt_paid_from_balance"
   | "currency_created"
   | "currency_updated"
-  | "currency_deleted";
+  | "currency_deleted"
+  | "service_created"
+  | "service_updated"
+  | "service_deleted";
 
 export interface LogEntry {
   id: string;
