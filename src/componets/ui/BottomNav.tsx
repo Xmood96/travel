@@ -32,6 +32,11 @@ const BottomNav = ({ currentTab, setCurrentTab }: BottomNavProps) => {
     { label: "المستخدمين", icon: <Users className="w-5 h-5" />, tab: "users" },
     { label: "التذاكر", icon: <Ticket className="w-5 h-5" />, tab: "tickets" },
     {
+      label: "الخدمات",
+      icon: <Briefcase className="w-5 h-5" />,
+      tab: "services",
+    },
+    {
       label: "الإعدادات",
       icon: <Settings className="w-5 h-5" />,
       tab: "settings",
