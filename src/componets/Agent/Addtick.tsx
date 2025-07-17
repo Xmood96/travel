@@ -224,7 +224,7 @@ export default function AddTicketForm() {
 
       const commonData = {
         ticketNumber: form.ticketNumber,
-        agentId: form.agentId,
+        agentId: agentId,
         paidAmount: paidAmountUSD, // Store in USD
         amountDue: amountDueUSD, // Store in USD
         partialPayment: partialPaymentUSD, // Store in USD
@@ -427,7 +427,7 @@ export default function AddTicketForm() {
         >
           <option disabled value="">
             اختر المستخدم الذي حرر{" "}
-            {formType === "service" ? "الخدمة" : "التذكرة"}
+            {formType === "service" ? "��لخدمة" : "التذكرة"}
           </option>
           {users?.map((u) => (
             <option key={u.id} value={u.id}>
