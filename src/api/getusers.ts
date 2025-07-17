@@ -8,6 +8,7 @@ export interface UserWithStats extends AppUser {
   ticketCount: number;
   balance: number; // debt from tickets
   userBalance?: number; // credit balance
+  tickets?: Ticket[]; // user's tickets
 }
 
 export const useUsersWithStats = () => {
@@ -49,6 +50,7 @@ export const useUsersWithStats = () => {
             ticketCount: userTickets.length,
             balance: unpaidAmount, // debt from tickets
             userBalance: user.userBalance || 0, // user credit balance
+            tickets: userTickets, // include user's tickets
           };
         });
       });
