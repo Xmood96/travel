@@ -143,7 +143,7 @@ export const useAppData = () => {
 
           return {
             ...user,
-            ticketCount: userTickets.length,
+            ticketCount: userTickets.length + userServiceTickets.length, // جميع التذاكر والخدمات
             balance: unpaidAmount,
             totalPaid: paidAmount,
             totalDue: totalDue,
@@ -282,7 +282,7 @@ export const useAppData = () => {
       queryClient.invalidateQueries({ queryKey: ["agents"] });
     },
   });
-  // ✅ تحديث رصيد وكيل
+  // �� تحديث رصيد وكيل
   const updateAgentBalance = useMutation({
     mutationFn: async ({
       id,
