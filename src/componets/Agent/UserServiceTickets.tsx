@@ -114,13 +114,6 @@ export default function UserServiceTickets() {
     );
   };
 
-  const getServiceName = (serviceId: string) => {
-    return (
-      services.find((service) => service.id === serviceId)?.name ||
-      "خدمة محذوفة"
-    );
-  };
-
   const openViewModal = (ticket: ServiceTicket) => {
     setSelectedTicket(ticket);
     setViewModalOpen(true);
@@ -244,7 +237,7 @@ export default function UserServiceTickets() {
             }
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           >
-            <option value="all">جم��ع الحالات</option>
+            <option value="all">جميع الحالات</option>
             <option value="paid">مدفوعة</option>
             <option value="unpaid">غير مدفوعة</option>
           </select>
