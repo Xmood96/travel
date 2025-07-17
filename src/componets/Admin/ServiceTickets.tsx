@@ -36,7 +36,7 @@ import { getAllServices } from "../../api/serviceService";
 export default function ServiceTickets() {
   const { user } = useAuth();
   const [serviceTickets, setServiceTickets] = useState<ServiceTicket[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const [, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "unpaid">(
