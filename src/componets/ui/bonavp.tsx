@@ -1,6 +1,6 @@
-import { Home, Ticket, User } from "lucide-react";
+import { Home, Ticket, User, Briefcase } from "lucide-react";
 
-type Tab = "dashboard" | "tickets" | "profile";
+type Tab = "dashboard" | "tickets" | "services" | "profile";
 
 interface BottomNavProps {
   currentTab: Tab;
