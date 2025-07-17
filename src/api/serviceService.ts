@@ -39,16 +39,18 @@ export const getAllServices = async (): Promise<Service[]> => {
 // Get active services only
 export const getActiveServices = async (): Promise<Service[]> => {
   try {
-    const q = query(
-      servicesCollection,
-      where("isActive", "==", true),
-      orderBy("createdAt", "desc"),
-    );
+    const q = query(servicesCollection, where("isActive", "==", true));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
+    const services = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as Service[];
+
+    // Sort by createdAt on client side to avoid composite index requirement
+    return services.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   } catch (error) {
     console.error("Error getting active services:", error);
     throw error;
