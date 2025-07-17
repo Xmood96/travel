@@ -27,7 +27,7 @@ export default function AddTicketForm() {
     amountDue: "" as string,
     partialPayment: "" as string, // الدفع الجزئي من المستحق
     isPaid: false,
-    currency: "USD", // ا��عملة المختارة
+    currency: "USD", // العملة المختارة
     paymentType: "full" as "full" | "partial", // نوع الدفع
     serviceId: "", // للخدمات
   });
@@ -103,6 +103,22 @@ export default function AddTicketForm() {
   // التحقق من الصلاحيات - يمكن للأدمن والعميل الوصول
   if (!user || (user.role !== "admin" && user.role !== "agent")) {
     return null;
+  }
+
+  // عرض التحميل إذا كانت البيانات الأساسية لم تُحمل بعد
+  if (agentsQuery.isLoading || !agentsQuery.data) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-4 rounded-xl shadow-md flex items-center justify-center"
+      >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="text-gray-600 mt-2">جار تحميل بيانات الوكلاء...</p>
+        </div>
+      </motion.div>
+    );
   }
 
   const createServiceTicket = async (
@@ -274,7 +290,7 @@ export default function AddTicketForm() {
         );
       }
 
-      // تحد��ث رصيد الوكيل (حتى لو أصبح سالب)
+      // تح����ث رصيد الوكيل (حتى لو أصبح سالب)
       await updateAgentBalance.mutateAsync({
         id: agent.id,
         newBalance,
@@ -592,7 +608,7 @@ export default function AddTicketForm() {
         {form.paymentType === "partial" && (
           <div className="grid grid-cols-2">
             <h1 className="text-center text-blue-800">
-              المبلغ الم��فوع من المستحق
+              المبلغ المدفوع من المستحق
             </h1>
             <input
               type="text"
@@ -624,7 +640,7 @@ export default function AddTicketForm() {
 
       {/* حالة الدفع */}
       <label className="label cursor-pointer justify-end gap-4 text-black">
-        {user?.role === "admin" ? "تم التسديد للإدار��" : "تم الدفع"}
+        {user?.role === "admin" ? "تم التسديد للإدارة" : "تم الدفع"}
         <input
           type="checkbox"
           className="checkbox text-blue-400 mx-2"
