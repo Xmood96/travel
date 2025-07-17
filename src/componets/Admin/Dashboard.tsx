@@ -120,14 +120,15 @@ const Dashboard = () => {
     serviceTicketsQuery.isLoading
   ) {
     return (
-      <LoadingSpinner fullScreen size="lg" text="جاري تحميل ��وحة التحكم..." />
+      <LoadingSpinner fullScreen size="lg" text="جاري تحميل لوحة التحكم..." />
     );
   }
 
   if (
     usersWithStatsQuery.isError ||
     ticketsQuery.isError ||
-    agentsQuery.isError
+    agentsQuery.isError ||
+    serviceTicketsQuery.isError
   ) {
     return (
       <ErrorDisplay
