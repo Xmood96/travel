@@ -205,8 +205,21 @@ const Chat = () => {
           className="fixed bottom-20 right-4 w-[90%] max-w-sm bg-white border rounded-2xl shadow-2xl z-50 flex flex-col h-[450px]"
         >
           {/* الرأس */}
-          <div className="p-3 border-b text-base font-semibold bg-blue-300 text-white rounded-t-2xl">
-            الدردشة الجماعية
+          <div className="p-3 border-b text-base font-semibold bg-blue-300 text-white rounded-t-2xl flex justify-between items-center">
+            <span>الدردشة الجماعية</span>
+            <button
+              onClick={() => setShowStarredMessages(!showStarredMessages)}
+              className="p-1 rounded-full hover:bg-blue-400 transition-colors"
+              title="الرسائل المعلمة بنجمة"
+            >
+              <Star
+                className={`w-5 h-5 ${
+                  messages.some((m) => m.starredBy?.includes(user?.id || ""))
+                    ? "fill-yellow-300 text-yellow-300"
+                    : "text-white"
+                }`}
+              />
+            </button>
           </div>
 
           {/* صندوق الرسائل */}
