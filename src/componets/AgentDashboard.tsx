@@ -7,8 +7,8 @@ import { useAuth } from "../context/AuthContext";
 import UserProfile from "./Profile";
 import BottomNav2 from "./ui/bonavp";
 import DashAgent from "./Agent/DashAgent";
-
 import TicketList from "./Agent/TicketAgent";
+import UserServiceTickets from "./Agent/UserServiceTickets";
 
 const AgentDashboard = () => {
   const { user: authUser } = useAuth();
