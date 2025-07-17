@@ -466,33 +466,43 @@ export default function AddTicketForm() {
                 ? ""
                 : Number(form.paidAmount).toLocaleString("en-US")
             }
-            onChange={(e) => {
-              const raw = e.target.value.replace(/,/g, "");
-              if (/^\d*$/.test(raw)) {
-                const selectedAgent = agentsQuery.data?.find(
-                  (agent) => agent.id === form.agentId,
-                );
+            onChange={
+              formType === "service"
+                ? undefined
+                : (e) => {
+                    const raw = e.target.value.replace(/,/g, "");
+                    if (/^\d*$/.test(raw)) {
+                      const selectedAgent = agentsQuery.data?.find(
+                        (agent) => agent.id === form.agentId,
+                      );
 
-                const selectedCurrency = getCurrencyByCode(form.currency);
-                if (selectedAgent && selectedCurrency) {
-                  const amountInUSD = convertToUSD(
-                    Number(raw),
-                    selectedCurrency,
-                  );
-                  if (amountInUSD > selectedAgent.balance) {
-                    const newBalance = selectedAgent.balance - amountInUSD;
-                    toast.warn(
-                      `⚠️ سيصبح رصيد البائع: ${newBalance.toLocaleString(
-                        "en-US",
-                      )} USD`,
-                    );
+                      const selectedCurrency = getCurrencyByCode(form.currency);
+                      if (selectedAgent && selectedCurrency) {
+                        const amountInUSD = convertToUSD(
+                          Number(raw),
+                          selectedCurrency,
+                        );
+                        if (amountInUSD > selectedAgent.balance) {
+                          const newBalance =
+                            selectedAgent.balance - amountInUSD;
+                          toast.warn(
+                            `⚠️ سيصبح رصيد البائع: ${newBalance.toLocaleString(
+                              "en-US",
+                            )} USD`,
+                          );
+                        }
+                      }
+
+                      setForm({ ...form, paidAmount: raw });
+                    }
                   }
-                }
-
-                setForm({ ...form, paidAmount: raw });
-              }
-            }}
-            className="rounded-lg h-8 border-blue-300 text-black bg-blue-100 w-full text-center font-bold"
+            }
+            readOnly={formType === "service"}
+            className={`rounded-lg h-8 border-blue-300 text-black w-full text-center font-bold ${
+              formType === "service"
+                ? "bg-gray-100 cursor-not-allowed"
+                : "bg-blue-100"
+            }`}
           />
         </div>
 
