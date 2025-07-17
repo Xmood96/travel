@@ -254,7 +254,7 @@ export default function AddTicketForm() {
         );
         if (amountDueInUSD < selectedService.price) {
           return toast.error(
-            `الم��لغ المستحق يجب أن يكون أكبر من أو يساوي سعر الخدمة (${selectedService.price} دولار)`,
+            `الم��لغ المستحق يجب أن يكون أكبر من أو يساوي سع�� الخدمة (${selectedService.price} دولار)`,
           );
         }
       }
@@ -276,12 +276,21 @@ export default function AddTicketForm() {
       const agent = agentsQuery.data.find((a) => a.id === agentId);
       console.log("الوكيل الموجود:", agent);
       if (!agent) {
+        console.log(`خطأ: لم يتم العثور على الوكيل بالمعرف ${agentId}`);
         toast.error(
-          `لم يتم العثور على ${formType === "service" ? "��يانات المستخدم" : "البائع المحدد"}`,
+          `لم يتم العثور على ${formType === "service" ? "بيانات المستخدم" : "البائع المحدد"}`,
         );
         setLoading(false);
         return;
       }
+
+      console.log(
+        "تم العثور على الوكيل بنجاح:",
+        agent.name,
+        "(الرصيد:",
+        agent.balance,
+        "USD)",
+      );
 
       // Get selected currency
       const selectedCurrency = getCurrencyByCode(form.currency);
@@ -321,7 +330,7 @@ export default function AddTicketForm() {
         createdAt: new Date().toISOString(),
         createdByUserId:
           user?.role === "admin" ? form.selectedUserId : user?.id,
-        // إذا كان المستخدم المحدد أدمن، التذكرة تصبح مدفوعة تلقائياً
+        // إذا كان المستخدم المحدد ��دمن، التذكرة تصبح مدفوعة تلقائياً
         isPaid:
           user?.role === "admin"
             ? users?.find((u) => u.id === form.selectedUserId)?.role === "admin"
@@ -510,7 +519,7 @@ export default function AddTicketForm() {
             setForm({
               ...form,
               selectedUserId: e.target.value,
-              // إذا كان المستخدم المحدد أد��ن، جعل ��لتذكرة مدفوعة تلقائياً
+              // إذا كان المستخدم المحدد أد����ن، جعل ��لتذكرة مدفوعة تلقائياً
               isPaid: selectedUser?.role === "admin" ? true : form.isPaid,
             });
           }}
