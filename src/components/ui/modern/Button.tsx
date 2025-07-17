@@ -88,6 +88,9 @@ export const ModernButton = ({
     onAnimationStart,
     onAnimationEnd,
     onAnimationIteration,
+    onDragStart,
+    onDragEnd,
+    onDrag,
     ...buttonProps
   } = props;
 
@@ -164,6 +167,9 @@ export const IconButton = ({
     onAnimationStart,
     onAnimationEnd,
     onAnimationIteration,
+    onDragStart,
+    onDragEnd,
+    onDrag,
     ...buttonProps
   } = props;
 
