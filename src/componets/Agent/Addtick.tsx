@@ -151,7 +151,7 @@ export default function AddTicketForm() {
         className="bg-white p-4 rounded-xl shadow-md"
       >
         <div className="text-center text-orange-600">
-          <p>لا توجد بيانات وكلاء متاحة</p>
+          <p>لا توجد بيانات وكلا�� متاحة</p>
           <p className="text-sm text-gray-500 mt-1">
             يرجى إضافة وكلاء من الإعدادات أولاً
           </p>
@@ -273,8 +273,38 @@ export default function AddTicketForm() {
         agentsQuery.data.map((a) => ({ id: a.id, name: a.name })),
       );
 
-      const agent = agentsQuery.data.find((a) => a.id === agentId);
+      let agent = agentsQuery.data.find((a) => a.id === agentId);
       console.log("الوكيل الموجود:", agent);
+
+      // إذا كان النوع خدمة ولم يتم العثور على الوكيل، يتم إنشاء واحد تلقائياً
+      if (!agent && formType === "service") {
+        console.log("إنشاء وكيل تلقائي للمستخدم:", user.name);
+        try {
+          // إنشاء وكيل جديد للمستخدم برصيد صفر
+          const newAgentData = {
+            name: user.name,
+            balance: 0,
+            preferredCurrency: "USD",
+            transportType: "air" as const,
+          };
+
+          // إضافة الوكيل إلى فايربيز بنفس معرف المستخدم
+          const agentRef = doc(db, "agents", user.id);
+          await setDoc(agentRef, newAgentData);
+
+          agent = { id: user.id, ...newAgentData };
+          console.log("تم إنشاء وكيل جديد:", agent);
+
+          // تحديث البيانات في الذاكرة
+          agentsQuery.refetch();
+        } catch (error) {
+          console.error("خطأ في إنشاء الوكيل:", error);
+          toast.error("فشل في إنشاء بيانات الوكيل");
+          setLoading(false);
+          return;
+        }
+      }
+
       if (!agent) {
         console.log(`خطأ: لم يتم العثور على الوكيل بالمعرف ${agentId}`);
         toast.error(
@@ -744,7 +774,7 @@ export default function AddTicketForm() {
         {formType === "service" && (
           <>
             <p className="text-green-600">
-              • <strong>للخدمات:</strong> سعر الخدمة يُحدد تلقائياً ولا يمكن
+              • <strong>للخ��مات:</strong> سعر الخدمة يُحدد تلقائياً ولا يمكن
               تعديله
             </p>
             <p className="text-green-600">
