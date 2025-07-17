@@ -182,9 +182,13 @@ export default function AddTicketForm() {
       console.log("Form Data: ", form);
 
       // الحصول عل�� بيانات الوكيل ��لمختار
-      const agent = agentsQuery.data?.find((a) => a.id === form.agentId);
+      // For services, use current user as agent, for tickets use selected agent
+      const agentId = formType === "service" ? user?.id || "" : form.agentId;
+      const agent = agentsQuery.data?.find((a) => a.id === agentId);
       if (!agent) {
-        toast.error("لم يتم العثور على البائع المحدد");
+        toast.error(
+          `لم يتم العثور على ${formType === "service" ? "بيانات المستخدم" : "البائع المحدد"}`,
+        );
         setLoading(false);
         return;
       }
