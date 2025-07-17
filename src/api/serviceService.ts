@@ -187,3 +187,20 @@ export const initializeDefaultServices = async (): Promise<void> => {
     throw error;
   }
 };
+
+// Get all service tickets
+export const getServiceTickets = async () => {
+  try {
+    const serviceTicketsCollection = collection(db, "serviceTickets");
+    const q = query(serviceTicketsCollection, orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching service tickets:", error);
+    throw error;
+  }
+};
