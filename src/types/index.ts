@@ -54,6 +54,22 @@ export interface Ticket {
   isClosed?: boolean;
 }
 
+export interface ServiceTicket {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  serviceBasePrice: number; // Base price of the service
+  agentId: string;
+  createdByUserId: string;
+  amountDue: number; // Amount due (must be >= serviceBasePrice)
+  isPaid: boolean;
+  paidAmount: number;
+  partialPayment?: number;
+  ticketNumber: string;
+  createdAt: string;
+  isClosed?: boolean;
+}
+
 // Logging Types
 export type LogActionType =
   | "ticket_created"
