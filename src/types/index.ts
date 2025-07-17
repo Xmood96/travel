@@ -10,6 +10,14 @@ export interface Currency {
   createdAt: string;
 }
 
+export interface Service {
+  id: string;
+  name: string; // e.g., "تأشيرة سياحية", "حجز طيران"
+  price: number; // Base price in USD
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface AppUser {
   id: string;
   name: string;
