@@ -138,6 +138,19 @@ export default function AddTicketForm() {
   }, [formType, selectedService, form.currency, user?.id]);
 
   const handleSubmit = async () => {
+    // التحقق من تحميل البيانات المطلوبة
+    if (agentsQuery.isLoading) {
+      return toast.error("جار تحميل بيانات الوكلاء، يرجى الانتظار...");
+    }
+
+    if (!user) {
+      return toast.error("يرجى تسجيل الدخول أولاً");
+    }
+
+    if (!agentsQuery.data || agentsQuery.data.length === 0) {
+      return toast.error("لا توجد بيانات وكلاء متاحة");
+    }
+
     // التحقق من الحقول المطلوبة بناء على نوع المستخدم
     if (!form.ticketNumber) {
       return toast.error("يرجى تعبئة رقم التذكرة/الخدمة");
@@ -187,7 +200,7 @@ export default function AddTicketForm() {
       const agent = agentsQuery.data?.find((a) => a.id === agentId);
       if (!agent) {
         toast.error(
-          `لم يتم العثور على ${formType === "service" ? "بيانات المستخدم" : "البائع المحدد"}`,
+          `لم يتم العثور على ${formType === "service" ? "��يانات المستخدم" : "البائع المحدد"}`,
         );
         setLoading(false);
         return;
@@ -511,7 +524,7 @@ export default function AddTicketForm() {
         </div>
 
         <div className="grid grid-cols-2">
-          <h1 className="text-center text-blue-800">المستحق</h1>
+          <h1 className="text-center text-blue-800">ا��مستحق</h1>
           <input
             type="text"
             placeholder={
@@ -633,8 +646,8 @@ export default function AddTicketForm() {
         {user?.role === "admin" && (
           <>
             <p className="text-blue-600">
-              • {formType === "service" ? "الخدمات" : "التذاكر"} المحررة م�� قبل
-              الأدمن تُعتبر مدفوعة تل��ائياً
+              • {formType === "service" ? "الخدمات" : "التذاكر"} ��لمحررة م��
+              قبل الأدمن تُعتبر مدفوعة تل��ائياً
             </p>
             <p className="text-blue-600">
               • يمكن تحديد المستخدم الذي حرر{" "}
