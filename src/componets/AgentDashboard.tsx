@@ -13,7 +13,7 @@ import UserServiceTickets from "./Agent/UserServiceTickets";
 const AgentDashboard = () => {
   const { user: authUser } = useAuth();
   const [currentTab, setCurrentTab] = useState<
-    "dashboard" | "tickets" | "profile"
+    "dashboard" | "tickets" | "services" | "profile"
   >("dashboard");
   const renderContent = () => {
     switch (currentTab) {
