@@ -6,6 +6,7 @@ import Dashboard from "./Dashboard";
 import BottomNav from "../ui/BottomNav";
 import Users from "./Users";
 import Tickets from "./Tickets";
+import ServiceTickets from "./ServiceTickets";
 import Settings from "./Settings";
 import AdminLogs from "../Logs/AdminLogs";
 import UserProfile from "../Profile";
