@@ -139,7 +139,8 @@ const Dashboard = () => {
     );
   }
 
-  const totalTickets = ticketsQuery.data?.length || 0;
+  const totalTickets =
+    (ticketsQuery.data?.length || 0) + (serviceTicketsQuery.data?.length || 0);
   const totalUsers = usersWithStatsQuery.data?.length || 0;
 
   const handleAddagent = async () => {
