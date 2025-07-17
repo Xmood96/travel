@@ -68,12 +68,12 @@ export default function TicketHistory({ userId }: { userId?: string }) {
     if (sort === "newest")
       list.sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     else
       list.sort(
         (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
 
     return list;
@@ -82,7 +82,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
   const totalPages = Math.ceil(filteredTickets.length / ITEMS_PER_PAGE);
   const currentTickets = filteredTickets.slice(
     (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
+    page * ITEMS_PER_PAGE,
   );
 
   const markTicketAsPaid = async (ticketId: string) => {
@@ -96,7 +96,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
         ticket.ticketNumber,
         user.id,
         user.name,
-        [{ field: "isPaid", oldValue: false, newValue: true }]
+        [{ field: "isPaid", oldValue: false, newValue: true }],
       );
 
       toast.success("تم تحديث التذكرة كمدفوعة ✅");
@@ -124,17 +124,24 @@ export default function TicketHistory({ userId }: { userId?: string }) {
 
   const handleUpdateTicket = async () => {
     if (!editingTicket || !user) return;
+
+    // Check if ticket is closed and user is not admin
+    if (editingTicket.isClosed && user.role !== "admin") {
+      toast.error("لا يمكن تعديل تذكرة مغلقة");
+      setEditingTicket(null);
+      return;
+    }
     try {
       const currency = getCurrencyByCode(editForm.currency);
       if (!currency) return toast.error("يرجى اختيار عملة صحيحة");
 
       const partial = convertToUSD(
         Number(editForm.partialPayment || 0),
-        currency
+        currency,
       );
       const due = convertToUSD(
         Number(editForm.amountDue || editingTicket.amountDue),
-        currency
+        currency,
       );
 
       if (partial > due) {
@@ -173,7 +180,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
           editingTicket.ticketNumber,
           user.id,
           user.name,
-          changes
+          changes,
         );
       }
 
@@ -251,17 +258,23 @@ export default function TicketHistory({ userId }: { userId?: string }) {
                     🔴 متبقي{" "}
                     {getFormattedBalance(
                       ticket.amountDue - (ticket.partialPayment || 0),
-                      userCurrency
+                      userCurrency,
                     )}
                   </span>
                 )}
                 <div className="flex flex-wrap gap-4 justify-end my-2">
-                  <button
-                    onClick={() => handleEditTicket(ticket)}
-                    className="btn-accent btn btn-sm bg-green-500 text-white"
-                  >
-                    <Edit className="w-3 h-3" /> تعديل
-                  </button>
+                  {ticket.isClosed ? (
+                    <span className="text-xs bg-orange-100 text-orange-800 px-3 py-1 rounded-full">
+                      تذكرة مغلقة - لا يمكن التعديل
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleEditTicket(ticket)}
+                      className="btn-accent btn btn-sm bg-green-500 text-white"
+                    >
+                      <Edit className="w-3 h-3" /> تعديل
+                    </button>
+                  )}
                   {!ticket.isPaid && (ticket.partialPayment || 0) === 0 && (
                     <button
                       onClick={() => markTicketAsPaid(ticket.id)}
@@ -320,15 +333,15 @@ export default function TicketHistory({ userId }: { userId?: string }) {
 
                     const newAmountDue = convertFromUSD(
                       convertToUSD(Number(editForm.amountDue), oldCurrencyObj),
-                      newCurrencyObj
+                      newCurrencyObj,
                     );
 
                     const newPartialPayment = convertFromUSD(
                       convertToUSD(
                         Number(editForm.partialPayment || 0),
-                        oldCurrencyObj
+                        oldCurrencyObj,
                       ),
-                      newCurrencyObj
+                      newCurrencyObj,
                     );
 
                     setEditForm({
@@ -383,7 +396,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
                       const amountDue = Number(editForm.amountDue);
                       if (Number(raw) > amountDue && amountDue > 0) {
                         toast.warn(
-                          "الدفع الجزئي لا يمكن أن يتجاوز المبلغ المستحق"
+                          "الدفع الجزئي لا يمكن أن يتجاوز المبلغ المستحق",
                         );
                         return;
                       }

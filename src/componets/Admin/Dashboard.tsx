@@ -95,13 +95,13 @@ const Dashboard = () => {
       type === "set" ? amountInUSD : agent.balance + amountInUSD;
 
     updateAgentBalance.mutate(
-      { id: currenid, newBalance: updatedBalance },
+      { id: currenid, newBalance: updatedBalance, updateType: type },
       {
         onSuccess: () => {
           toast.success("✅ تم تحديث الرصيد");
           setNewBalance("");
         },
-      }
+      },
     );
   };
 
@@ -164,7 +164,7 @@ const Dashboard = () => {
           setAgentCurrency("USD");
           setTransportType("air");
         },
-      }
+      },
     );
   };
 
@@ -181,7 +181,7 @@ const Dashboard = () => {
 
   const totalProfit = allTickets.reduce(
     (sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)),
-    0
+    0,
   );
 
   const now = new Date();
@@ -201,12 +201,12 @@ const Dashboard = () => {
 
   const thisMonthProfit = thisMonthTickets.reduce(
     (sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)),
-    0
+    0,
   );
 
   const thisMonthpayed = thisMonthTickets.reduce(
     (sum, t) => sum + Number(t.paidAmount),
-    0
+    0,
   );
 
   return (
@@ -461,7 +461,7 @@ const Dashboard = () => {
                       >
                         {getFormattedBalance(
                           agent.balance,
-                          agent.preferredCurrency || "USD"
+                          agent.preferredCurrency || "USD",
                         )}
                       </p>
                     </div>
@@ -496,7 +496,7 @@ const Dashboard = () => {
       <FloatingActionButton
         actions={getDefaultFABActions(
           () => setTicketFormOpen(true),
-          () => setAddModalOpen(true)
+          () => setAddModalOpen(true),
         )}
       />
 
@@ -633,7 +633,7 @@ const Dashboard = () => {
               العملة
             </label>
             <select
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-300 text-blue-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={selectedCurrency}
               onChange={(e) => setSelectedCurrency(e.target.value)}
             >
@@ -667,7 +667,7 @@ const Dashboard = () => {
                   setNewBalance(raw);
                 }
               }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-blue-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             />
           </div>
 
@@ -699,7 +699,7 @@ const Dashboard = () => {
         onClose={() => setAgentToDelete(null)}
         onConfirm={handleDeleteAgent}
         title="تأكيد حذف الوكيل"
-        message="هل أنت متأكد أنك تريد حذف هذا الوكيل؟ لا يمكن التراجع عن هذا الإجراء."
+        message="هل أن�� متأكد أنك تريد حذف هذا الوكيل؟ لا يمكن التراجع عن هذا الإجراء."
         confirmText="ح��ف الوكيل"
         cancelText="إلغاء"
         confirmColor="bg-red-500 hover:bg-red-600"

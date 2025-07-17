@@ -43,6 +43,7 @@ export interface Ticket {
   partialPayment?: number;
   ticketNumber: string;
   createdAt: string;
+  isClosed?: boolean;
 }
 
 // Logging Types

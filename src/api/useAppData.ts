@@ -16,6 +16,12 @@ import { db } from "../api/Firebase";
 import type { AppUser, Ticket, Agent } from "../types";
 import type { User } from "firebase/auth";
 import { withRetry, handleFirebaseError } from "./firebaseErrorHandler";
+import {
+  logAgentCreated,
+  logAgentDeleted,
+  logAgentBalanceUpdated,
+} from "./loggingService";
+import { useAuth } from "../context/AuthContext";
 
 const agentsCollection = collection(db, "agents");
 const ticketsCollection = collection(db, "tickets");
@@ -29,6 +35,7 @@ export interface UserWithStats extends AppUser {
 }
 
 export const useAppData = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const agentsQuery = useQuery<Agent[]>({
     queryKey: ["agents"],
@@ -82,7 +89,7 @@ export const useAppData = () => {
               return sum + remaining;
             }, 0);
 
-          // حساب المبلغ المدفوع (للتذاكر المدفوعة بالكامل + الدفع الجزئي للغير مدفوعة)
+          // حساب المبلغ المدفوع (للتذاكر المدفوعة بالك��مل + الدفع الجزئي للغير مدفوعة)
           const paidAmount = userTickets.reduce((sum, t) => {
             if (t.isPaid) {
               return sum + t.amountDue; // التذاكر المدفوعة بالكامل
@@ -198,6 +205,19 @@ export const useAppData = () => {
   const createAgent = useMutation({
     mutationFn: async (agent: Omit<Agent, "id">) => {
       const docRef = await addDoc(agentsCollection, agent);
+
+      // Log agent creation
+      if (user?.id && user?.name) {
+        await logAgentCreated(
+          docRef.id,
+          agent.name,
+          user.id,
+          user.name,
+          agent.balance,
+          agent.preferredCurrency || "USD",
+        );
+      }
+
       return docRef.id;
     },
     onSuccess: () => {
@@ -206,8 +226,17 @@ export const useAppData = () => {
   });
   const deleteAgent = useMutation({
     mutationFn: async (id: string) => {
+      // Get agent data before deletion for logging
       const agentRef = doc(agentsCollection, id);
+      const agentSnap = await getDoc(agentRef);
+      const agentData = agentSnap.data() as Agent | undefined;
+
       await deleteDoc(agentRef);
+
+      // Log agent deletion
+      if (user?.id && user?.name && agentData) {
+        await logAgentDeleted(id, agentData.name, user.id, user.name);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agents"] });
@@ -218,12 +247,32 @@ export const useAppData = () => {
     mutationFn: async ({
       id,
       newBalance,
+      updateType = "set",
     }: {
       id: string;
       newBalance: number;
+      updateType?: "set" | "add";
     }) => {
+      // Get current agent data for logging
       const agentRef = doc(agentsCollection, id);
+      const agentSnap = await getDoc(agentRef);
+      const currentAgent = agentSnap.data() as Agent | undefined;
+
       await updateDoc(agentRef, { balance: newBalance });
+
+      // Log balance update
+      if (user?.id && user?.name && currentAgent) {
+        await logAgentBalanceUpdated(
+          id,
+          currentAgent.name,
+          user.id,
+          user.name,
+          currentAgent.balance,
+          newBalance,
+          updateType,
+          currentAgent.preferredCurrency || "USD",
+        );
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agents"] });

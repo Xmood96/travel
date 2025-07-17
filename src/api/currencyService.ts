@@ -10,6 +10,11 @@ import {
 } from "firebase/firestore";
 import { db } from "./Firebase";
 import type { Currency } from "../types";
+import {
+  logCurrencyCreated,
+  logCurrencyUpdated,
+  logCurrencyDeleted,
+} from "./loggingService";
 
 // Default currencies
 export const DEFAULT_CURRENCIES: Omit<Currency, "id" | "createdAt">[] = [
@@ -76,12 +81,26 @@ export const getAllCurrencies = async (): Promise<Currency[]> => {
 // Add new currency
 export const addCurrency = async (
   currency: Omit<Currency, "id" | "createdAt">,
+  performedBy?: string,
+  performedByName?: string,
 ): Promise<void> => {
   try {
-    await addDoc(collection(db, "currencies"), {
+    const docRef = await addDoc(collection(db, "currencies"), {
       ...currency,
       createdAt: new Date().toISOString(),
     });
+
+    // Log the currency creation
+    if (performedBy && performedByName) {
+      await logCurrencyCreated(
+        docRef.id,
+        currency.name,
+        currency.code,
+        currency.exchangeRate,
+        performedBy,
+        performedByName,
+      );
+    }
   } catch (error) {
     console.error("Error adding currency:", error);
     throw error;
@@ -92,10 +111,30 @@ export const addCurrency = async (
 export const updateCurrency = async (
   id: string,
   updates: Partial<Currency>,
+  performedBy?: string,
+  performedByName?: string,
+  currencyName?: string,
+  currencyCode?: string,
 ): Promise<void> => {
   try {
     const currencyRef = doc(db, "currencies", id);
     await updateDoc(currencyRef, updates);
+
+    // Log the currency update
+    if (performedBy && performedByName && currencyName && currencyCode) {
+      const changes = Object.entries(updates)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join("، ");
+
+      await logCurrencyUpdated(
+        id,
+        currencyName,
+        currencyCode,
+        performedBy,
+        performedByName,
+        changes,
+      );
+    }
   } catch (error) {
     console.error("Error updating currency:", error);
     throw error;
@@ -103,10 +142,27 @@ export const updateCurrency = async (
 };
 
 // Delete currency
-export const deleteCurrency = async (id: string): Promise<void> => {
+export const deleteCurrency = async (
+  id: string,
+  performedBy?: string,
+  performedByName?: string,
+  currencyName?: string,
+  currencyCode?: string,
+): Promise<void> => {
   try {
     const currencyRef = doc(db, "currencies", id);
     await deleteDoc(currencyRef);
+
+    // Log the currency deletion
+    if (performedBy && performedByName && currencyName && currencyCode) {
+      await logCurrencyDeleted(
+        id,
+        currencyName,
+        currencyCode,
+        performedBy,
+        performedByName,
+      );
+    }
   } catch (error) {
     console.error("Error deleting currency:", error);
     throw error;

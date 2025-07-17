@@ -9,9 +9,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useUsersWithStats, type UserWithStats } from "../../api/getusers";
+import { useUserTickets } from "../../api/ticketbuid";
 import { Button } from "../ui/botom";
 import { Modal } from "../ui/modal";
-import { deleteDoc, doc, updateDoc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc, setDoc, getDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "../../api/Firebase";
 import { motion } from "framer-motion";
@@ -24,8 +25,10 @@ import {
   logUserDeleted,
   logUserBalanceUpdated,
   logUserDebtPaidFromBalance,
+  logTicketUpdated,
 } from "../../api/loggingService";
 import { useAuth } from "../../context/AuthContext";
+import PaymentInputs from "./PaymentInputs";
 
 export default function Users() {
   const { data: users, isLoading, refetch } = useUsersWithStats();
@@ -65,9 +68,12 @@ export default function Users() {
 
   // بيانات دفع الدين من الرصيد
   const [payDebtData, setPayDebtData] = useState({
+    paymentType: "general" as "general" | "ticket",
     ticketId: "",
     amount: "",
     currency: "USD",
+    comment: "",
+    closeTicket: false,
   });
 
   // رسالة خطأ
@@ -113,12 +119,12 @@ export default function Users() {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         newUserData.email.trim(),
-        newUserData.password
+        newUserData.password,
       );
 
       const user = userCredential.user;
 
-      // إضافة بيانات المستخدم إلى Firestore
+      // إضافة ��يانات المستخدم إلى Firestore
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         name: newUserData.name.trim(),
@@ -137,17 +143,17 @@ export default function Users() {
           newUserData.email.trim(),
           newUserData.role,
           currentUser.id,
-          currentUser.name
+          currentUser.name,
         );
       }
 
-      toast.success("تم إضافة المستخدم بنجاح!");
+      toast.success("تم إضافة المستخدم بن��اح!");
 
       // تنظيف البيانات وإغلاق المودال
       setAddModalOpen(false);
       setNewUserData({ name: "", email: "", password: "", role: "agent" });
 
-      // إعاد�� تحميل قائمة المستخدمين
+      // إعاد�� تحميل قائمة المس��خدمين
       refetch();
     } catch (error: any) {
       console.error("خطأ أثناء إضافة المستخدم:", error);
@@ -158,7 +164,7 @@ export default function Users() {
       } else if (error.code === "auth/weak-password") {
         setError("كلمة المرور ضعيفة جداً.");
       } else if (error.code === "auth/invalid-email") {
-        setError("البريد الإلكتروني غير صحيح.");
+        setError("الب��يد الإلكتروني غير صحيح.");
       } else {
         setError("حدث خط�� أثناء إضافة المستخدم.");
       }
@@ -181,7 +187,7 @@ export default function Users() {
     }
 
     try {
-      // العثور على المستخدم في القائمة للحصول على document ID
+      // العثور على المس��خدم في القائمة للحصول على document ID
       const userDoc = users?.find((u) => u.id === editUserData.id);
       if (!userDoc) {
         setError("لم يتم العثور على المستخدم.");
@@ -199,14 +205,14 @@ export default function Users() {
       // Log the user update
       if (currentUser) {
         const changes = `الاسم: ${editUserData.name.trim()}، الدور: ${
-          editUserData.role === "admin" ? "مدير" : "وكيل"
+          editUserData.role === "admin" ? "مدير" : "��كيل"
         }`;
         await logUserUpdated(
           editUserData.id,
           editUserData.name.trim(),
           currentUser.id,
           currentUser.name,
-          changes
+          changes,
         );
       }
 
@@ -242,7 +248,7 @@ export default function Users() {
           userToDelete,
           userToDeleteData.name,
           currentUser.id,
-          currentUser.name
+          currentUser.name,
         );
       }
 
@@ -282,9 +288,12 @@ export default function Users() {
   const openPayDebtModal = (user: UserWithStats) => {
     setBalanceUser(user);
     setPayDebtData({
+      paymentType: "general",
       ticketId: "",
       amount: "",
       currency: "USD",
+      comment: "",
+      closeTicket: false,
     });
     setPayDebtModalOpen(true);
   };
@@ -340,7 +349,7 @@ export default function Users() {
         currentBalance,
         newBalance,
         balanceData.operation,
-        balanceData.currency
+        balanceData.currency,
       );
 
       toast.success("تم تحديث رصيد المستخدم بنجاح!");
@@ -366,7 +375,14 @@ export default function Users() {
 
     // التحقق من صحة البيانات
     if (!payDebtData.amount.trim() || Number(payDebtData.amount) <= 0) {
-      setError("يرجى إدخال مبلغ صحيح");
+      setError("يرجى إدخال مبلغ صحي��");
+      setLoading(false);
+      return;
+    }
+
+    // التحقق من اختيار تذكرة في حالة الدفع لتذكرة محددة
+    if (payDebtData.paymentType === "ticket" && !payDebtData.ticketId) {
+      setError("يرجى اختيار تذكرة");
       setLoading(false);
       return;
     }
@@ -399,24 +415,108 @@ export default function Users() {
         userBalance: newBalance,
       });
 
+      // في حالة الدفع لتذكرة محددة، نحدث بيانات التذكرة
+      if (payDebtData.paymentType === "ticket" && payDebtData.ticketId) {
+        const ticketRef = doc(db, "tickets", payDebtData.ticketId);
+        // جلب بيانات التذكرة الحالية
+        const ticketSnap = await getDoc(ticketRef);
+        if (ticketSnap.exists()) {
+          const ticketData = ticketSnap.data();
+          const currentPaidAmount = ticketData.paidAmount || 0;
+          const currentPartialPayment = ticketData.partialPayment || 0;
+
+          // Calculate new amounts
+          const newPaidAmount = currentPaidAmount + amountUSD;
+          const newPartialPayment = currentPartialPayment + amountUSD;
+          const isPaid = newPaidAmount >= ticketData.amountDue;
+
+          // Log ticket update for audit
+          const changes = [
+            {
+              field: "paidAmount",
+              oldValue: currentPaidAmount,
+              newValue: newPaidAmount,
+            },
+            {
+              field: "partialPayment",
+              oldValue: currentPartialPayment,
+              newValue: newPartialPayment,
+            },
+            {
+              field: "isPaid",
+              oldValue: ticketData.isPaid || false,
+              newValue: isPaid,
+            },
+          ];
+
+          // Add closure change if requested
+          if (payDebtData.closeTicket) {
+            changes.push({
+              field: "isClosed",
+              oldValue: ticketData.isClosed || false,
+              newValue: true,
+            });
+          }
+
+          const updateData: any = {
+            paidAmount: newPaidAmount,
+            partialPayment: newPartialPayment,
+            isPaid: isPaid,
+          };
+
+          // Add closure if requested
+          if (payDebtData.closeTicket) {
+            updateData.isClosed = true;
+          }
+
+          await updateDoc(ticketRef, updateData);
+
+          // Log ticket payment
+          await logTicketUpdated(
+            payDebtData.ticketId,
+            ticketData.ticketNumber || payDebtData.ticketId,
+            currentUser.id,
+            currentUser.name,
+            changes,
+          );
+        }
+      }
+
       // Log the transaction
+      const description =
+        payDebtData.paymentType === "general"
+          ? `خصم عام - ${payDebtData.comment || "بدون تعليق"}`
+          : `دفع تذكرة رقم ${payDebtData.ticketId}`;
+
       await logUserDebtPaidFromBalance(
         balanceUser.id,
         balanceUser.name,
-        payDebtData.ticketId || "general_debt",
-        payDebtData.ticketId || "دين عام",
+        payDebtData.ticketId || "general_deduction",
+        description,
         currentUser.id,
         currentUser.name,
         amountUSD,
         balanceUser.balance, // remaining debt (debt from tickets)
         newBalance,
-        payDebtData.currency
+        payDebtData.currency,
       );
 
-      toast.success("تم دفع المبلغ من رصيد المستخدم بنجاح!");
+      const successMessage =
+        payDebtData.paymentType === "general"
+          ? "تم خصم المبلغ من رصيد المستخدم بنج��ح!"
+          : "تم دفع التذكرة من رصيد المستخدم بنجاح!";
+
+      toast.success(successMessage);
       setPayDebtModalOpen(false);
       setBalanceUser(null);
-      setPayDebtData({ ticketId: "", amount: "", currency: "USD" });
+      setPayDebtData({
+        paymentType: "general",
+        ticketId: "",
+        amount: "",
+        currency: "USD",
+        comment: "",
+        closeTicket: false,
+      });
       refetch();
     } catch (error) {
       console.error("Error paying debt from balance:", error);
@@ -511,7 +611,7 @@ export default function Users() {
                   رصيد المحفظة:{" "}
                   {getFormattedBalance(
                     (user as any).userBalance || 0,
-                    (user as any).preferredCurrency || "USD"
+                    (user as any).preferredCurrency || "USD",
                   )}
                 </p>
               </div>
@@ -534,7 +634,7 @@ export default function Users() {
                   return remainingBalance > 0
                     ? getFormattedBalance(
                         remainingBalance,
-                        (user as any).preferredCurrency || "USD"
+                        (user as any).preferredCurrency || "USD",
                       )
                     : "مسدد بالكامل";
                 })()}
@@ -586,7 +686,7 @@ export default function Users() {
       <Modal
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
-        title="تفاصيل المستخدم"
+        title="تفاصيل المستخد��"
       >
         {selectedUser && (
           <div className="space-y-2 text-sm">
@@ -604,9 +704,9 @@ export default function Users() {
                 selectedUser.tickets?.reduce(
                   (sum: number, ticket: any) =>
                     sum + (ticket.partialPayment || 0),
-                  0
+                  0,
                 ) || 0,
-                "USD"
+                "USD",
               )}
             </p>
             <p
@@ -615,7 +715,7 @@ export default function Users() {
                   (selectedUser.tickets?.reduce(
                     (sum: number, ticket: any) =>
                       sum + (ticket.partialPayment || 0),
-                    0
+                    0,
                   ) || 0) >
                 0
                   ? "text-red-600"
@@ -627,7 +727,7 @@ export default function Users() {
                 (selectedUser.tickets?.reduce(
                   (sum: number, ticket: any) =>
                     sum + (ticket.partialPayment || 0),
-                  0
+                  0,
                 ) || 0) >
               0
                 ? getFormattedBalance(
@@ -635,9 +735,9 @@ export default function Users() {
                       (selectedUser.tickets?.reduce(
                         (sum: number, ticket: any) =>
                           sum + (ticket.partialPayment || 0),
-                        0
+                        0,
                       ) || 0),
-                    "USD"
+                    "USD",
                   )
                 : "مسدد بالكامل"}
             </p>
@@ -645,7 +745,7 @@ export default function Users() {
               رصيد المستخدم:{" "}
               {getFormattedBalance(
                 (selectedUser as any).userBalance || 0,
-                (selectedUser as any).preferredCurrency || "USD"
+                (selectedUser as any).preferredCurrency || "USD",
               )}
             </p>
           </div>
@@ -821,7 +921,7 @@ export default function Users() {
                 الرصيد الحالي:{" "}
                 {getFormattedBalance(
                   (balanceUser as any).userBalance || 0,
-                  (balanceUser as any).preferredCurrency || "USD"
+                  (balanceUser as any).preferredCurrency || "USD",
                 )}
               </p>
             </div>
@@ -838,7 +938,7 @@ export default function Users() {
             >
               <option value="set">تعيين رصيد جديد</option>
               <option value="add">إضافة للرصيد</option>
-              <option value="subtract">خصم من الرصيد</option>
+              <option value="subtract">خصم م�� الرصيد</option>
             </select>
 
             <select
@@ -904,7 +1004,14 @@ export default function Users() {
         onClose={() => {
           setPayDebtModalOpen(false);
           setBalanceUser(null);
-          setPayDebtData({ ticketId: "", amount: "", currency: "USD" });
+          setPayDebtData({
+            paymentType: "general",
+            ticketId: "",
+            amount: "",
+            currency: "USD",
+            comment: "",
+            closeTicket: false,
+          });
           setError("");
         }}
         title="دفع دين من رصيد المستخدم"
@@ -917,7 +1024,7 @@ export default function Users() {
                 الرصيد المتاح:{" "}
                 {getFormattedBalance(
                   (balanceUser as any).userBalance || 0,
-                  (balanceUser as any).preferredCurrency || "USD"
+                  (balanceUser as any).preferredCurrency || "USD",
                 )}
               </p>
               <p>
@@ -926,45 +1033,52 @@ export default function Users() {
               </p>
             </div>
 
-            <input
-              type="text"
-              placeholder="رقم التذكرة (اختياري)"
-              className="input bg-slate-100 input-bordered w-full"
-              value={payDebtData.ticketId}
-              onChange={(e) =>
-                setPayDebtData({ ...payDebtData, ticketId: e.target.value })
-              }
-            />
+            {/* نوع العملية */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                نوع العملية
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="general"
+                    checked={payDebtData.paymentType === "general"}
+                    onChange={(e) =>
+                      setPayDebtData({
+                        ...payDebtData,
+                        paymentType: e.target.value as "general" | "ticket",
+                        ticketId: "",
+                      })
+                    }
+                    className="radio radio-primary"
+                  />
+                  <span className="text-sm">خصم عام</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="ticket"
+                    checked={payDebtData.paymentType === "ticket"}
+                    onChange={(e) =>
+                      setPayDebtData({
+                        ...payDebtData,
+                        paymentType: e.target.value as "general" | "ticket",
+                        comment: "",
+                      })
+                    }
+                    className="radio radio-primary"
+                  />
+                  <span className="text-sm">دفع تذكرة محددة</span>
+                </label>
+              </div>
+            </div>
 
-            <select
-              className="select bg-slate-100 select-bordered w-full"
-              value={payDebtData.currency}
-              onChange={(e) =>
-                setPayDebtData({ ...payDebtData, currency: e.target.value })
-              }
-            >
-              {currencies?.map((currency) => (
-                <option key={currency.id} value={currency.code}>
-                  {currency.name} ({currency.symbol})
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="text"
-              placeholder="المبلغ المراد دفعه"
-              className="input bg-slate-100 input-bordered w-full"
-              value={
-                payDebtData.amount === ""
-                  ? ""
-                  : Number(payDebtData.amount).toLocaleString("en-US")
-              }
-              onChange={(e) => {
-                const raw = e.target.value.replace(/,/g, "");
-                if (/^\d*\.?\d*$/.test(raw)) {
-                  setPayDebtData({ ...payDebtData, amount: raw });
-                }
-              }}
+            <PaymentInputs
+              balanceUser={balanceUser}
+              payDebtData={payDebtData}
+              setPayDebtData={setPayDebtData}
+              currencies={currencies}
             />
 
             {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -975,14 +1089,25 @@ export default function Users() {
                 onClick={() => {
                   setPayDebtModalOpen(false);
                   setBalanceUser(null);
-                  setPayDebtData({ ticketId: "", amount: "", currency: "USD" });
+                  setPayDebtData({
+                    paymentType: "general",
+                    ticketId: "",
+                    amount: "",
+                    currency: "USD",
+                    comment: "",
+                    closeTicket: false,
+                  });
                   setError("");
                 }}
               >
                 إلغاء
               </Button>
               <Button onClick={handlePayDebtFromBalance} disabled={loading}>
-                {loading ? "جاري الدفع..." : "دفع من الرصيد"}
+                {loading
+                  ? "جاري العملية..."
+                  : payDebtData.paymentType === "general"
+                    ? "خصم من الرصيد"
+                    : "دفع التذكرة"}
               </Button>
             </div>
           </div>

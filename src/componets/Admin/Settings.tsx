@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Modal } from "../ui/modal";
 import { Button } from "../ui/botom";
 import type { Currency } from "../../types";
+import { useAuth } from "../../context/AuthContext";
 import {
   getAllCurrencies,
   addCurrency,
@@ -14,6 +15,7 @@ import {
 } from "../../api/currencyService";
 
 export default function Settings() {
+  const { user } = useAuth();
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -85,13 +87,17 @@ export default function Settings() {
     }
 
     try {
-      await addCurrency({
-        code: currencyForm.code.toUpperCase(),
-        name: currencyForm.name.trim(),
-        symbol: currencyForm.symbol.trim(),
-        exchangeRate: Number(currencyForm.exchangeRate),
-        isActive: currencyForm.isActive,
-      });
+      await addCurrency(
+        {
+          code: currencyForm.code.toUpperCase(),
+          name: currencyForm.name.trim(),
+          symbol: currencyForm.symbol.trim(),
+          exchangeRate: Number(currencyForm.exchangeRate),
+          isActive: currencyForm.isActive,
+        },
+        user?.id,
+        user?.name,
+      );
 
       toast.success("تم إضافة العملة بنجاح!");
       setAddModalOpen(false);
@@ -140,13 +146,20 @@ export default function Settings() {
     }
 
     try {
-      await updateCurrency(editingCurrency.id, {
-        code: currencyForm.code.toUpperCase(),
-        name: currencyForm.name.trim(),
-        symbol: currencyForm.symbol.trim(),
-        exchangeRate: Number(currencyForm.exchangeRate),
-        isActive: currencyForm.isActive,
-      });
+      await updateCurrency(
+        editingCurrency.id,
+        {
+          code: currencyForm.code.toUpperCase(),
+          name: currencyForm.name.trim(),
+          symbol: currencyForm.symbol.trim(),
+          exchangeRate: Number(currencyForm.exchangeRate),
+          isActive: currencyForm.isActive,
+        },
+        user?.id,
+        user?.name,
+        editingCurrency.name,
+        editingCurrency.code,
+      );
 
       toast.success("تم تحديث العملة بنجاح!");
       setEditModalOpen(false);
@@ -173,7 +186,13 @@ export default function Settings() {
     }
 
     try {
-      await deleteCurrency(currencyToDelete);
+      await deleteCurrency(
+        currencyToDelete,
+        user?.id,
+        user?.name,
+        currency?.name,
+        currency?.code,
+      );
       toast.success("تم حذف العملة بنجاح!");
       setCurrencyToDelete(null);
       loadCurrencies();

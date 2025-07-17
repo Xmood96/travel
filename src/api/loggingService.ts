@@ -276,7 +276,7 @@ export const logAgentBalanceUpdated = async (
 ): Promise<void> => {
   const description =
     updateType === "set"
-      ? `تم تعيين رصيد البائع ${agentName} إلى ${newBalance} ${currency} (كان ${oldBalance} ${currency})`
+      ? `تم تعيين رصيد الب��ئع ${agentName} إلى ${newBalance} ${currency} (كان ${oldBalance} ${currency})`
       : `تم إضافة ${newBalance - oldBalance} ${currency} لرصيد البائع ${agentName} (أصبح ${newBalance} ${currency})`;
 
   await createLogEntry({
@@ -363,7 +363,7 @@ export const logUserBalanceUpdated = async (
   } else if (updateType === "add") {
     description = `تم إضافة ${newBalance - oldBalance} ${currency} لرصيد المستخدم ${userName} (أصبح ${newBalance} ${currency})`;
   } else {
-    description = `تم خصم ${oldBalance - newBalance} ${currency} من رصيد المستخدم ${userName} (أصبح ${newBalance} ${currency})`;
+    description = `تم خ��م ${oldBalance - newBalance} ${currency} من رصيد المستخدم ${userName} (أصبح ${newBalance} ${currency})`;
   }
 
   await createLogEntry({
@@ -469,7 +469,7 @@ export const logCurrencyDeleted = async (
   });
 };
 
-// Helper function to format timestamp for display
+// Helper function to format timestamp for display in Gregorian calendar
 export const formatLogTimestamp = (timestamp: string): string => {
   const date = new Date(timestamp);
   return new Intl.DateTimeFormat("ar-SA", {

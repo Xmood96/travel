@@ -67,6 +67,7 @@ export default function ModernTickets() {
     isPaid: false,
     amountDue: "",
     currency: "USD",
+    isClosed: false,
   });
 
   const tickets = ticketsQuery.data || [];
@@ -173,6 +174,7 @@ export default function ModernTickets() {
       isPaid: ticket.isPaid || false,
       amountDue: ticket.amountDue?.toString() || "",
       currency: "USD",
+      isClosed: ticket.isClosed || false,
     });
   };
 
@@ -220,11 +222,20 @@ export default function ModernTickets() {
         });
       }
 
+      if (editForm.isClosed !== (editingTicket.isClosed || false)) {
+        changes.push({
+          field: "isClosed",
+          oldValue: editingTicket.isClosed || false,
+          newValue: editForm.isClosed,
+        });
+      }
+
       const ticketRef = doc(db, "tickets", editingTicket.id);
       await updateDoc(ticketRef, {
         partialPayment: partialPaymentUSD,
         isPaid: editForm.isPaid,
         amountDue: amountDueUSD,
+        isClosed: editForm.isClosed,
       });
 
       if (changes.length > 0) {
@@ -325,7 +336,7 @@ export default function ModernTickets() {
                   )}
                   {statusFilter !== "all" && (
                     <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-md text-xs">
-                      الحالة:{" "}
+                      ال��الة:{" "}
                       {
                         statusOptions.find((s) => s.value === statusFilter)
                           ?.label
@@ -371,7 +382,16 @@ export default function ModernTickets() {
                 >
                   <ModernCard variant="glass" hover>
                     <CardHeader
-                      title={`تذكرة #${ticket.ticketNumber}`}
+                      title={
+                        <div className="flex items-center gap-2">
+                          <span>{`تذكرة #${ticket.ticketNumber}`}</span>
+                          {ticket.isClosed && (
+                            <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                              مغلقة
+                            </span>
+                          )}
+                        </div>
+                      }
                       subtitle={getUserName(ticket.createdByUserId)}
                       icon={<TicketIcon size={20} />}
                       action={
@@ -576,7 +596,7 @@ export default function ModernTickets() {
                   onClick={() => setPage(totalPages)}
                   disabled={page === totalPages}
                 >
-                  الأخيرة
+                  الأ��يرة
                 </ModernButton>
               </div>
             </div>
@@ -596,7 +616,7 @@ export default function ModernTickets() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <h4 className="font-semibold text-gray-900 border-b pb-2">
-                  معلومات التذكرة
+                  معلومات التذك��ة
                 </h4>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
@@ -765,7 +785,21 @@ export default function ModernTickets() {
                 }
               />
               <label className="text-sm font-medium text-gray-700">
-                تم الدفع بالكامل
+                تم الدفع ��الكامل
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-lg">
+              <input
+                type="checkbox"
+                className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                checked={editForm.isClosed}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, isClosed: e.target.checked })
+                }
+              />
+              <label className="text-sm font-medium text-gray-700">
+                إغلاق التذكرة (منع التعديل من قبل المستخدمين)
               </label>
             </div>
 

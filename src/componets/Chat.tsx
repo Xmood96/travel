@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, SendHorizonal } from "lucide-react";
-
 import {
   collection,
   addDoc,
@@ -11,8 +10,8 @@ import {
   serverTimestamp,
   updateDoc,
   doc,
+  limitToLast,
 } from "firebase/firestore";
-
 import { Timestamp } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../api/Firebase";
@@ -26,6 +25,11 @@ type MessageType = {
   senderPhoto: string;
   reactions?: { [userId: string]: string };
   seenBy?: string[];
+  replyTo?: {
+    id: string;
+    text: string;
+    senderName: string;
+  };
 };
 
 const Chat = () => {
@@ -33,19 +37,29 @@ const Chat = () => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<MessageType[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const [unreadCount, setUnreadCount] = useState(0);
+  const [limit, setLimit] = useState(20);
+  const chatBoxRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [replyTo, setReplyTo] = useState<null | {
+    id: string;
+    text: string;
+    senderName: string;
+  }>(null);
 
   // جلب الرسائل
   useEffect(() => {
-    const q = query(collection(db, "chat"), orderBy("createdAt", "asc"));
+    const q = query(
+      collection(db, "chat"),
+      orderBy("createdAt", "desc"),
+      limitToLast(limit)
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs: MessageType[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<MessageType, "id">),
       }));
-      setMessages(msgs);
+      setMessages(msgs.reverse()); // ترتيب من الأقدم للأحدث
 
       if (user) {
         const unread = msgs.filter(
@@ -59,7 +73,7 @@ const Chat = () => {
     });
 
     return () => unsubscribe();
-  }, [user, open]);
+  }, [user, open, limit]);
 
   useEffect(() => {
     if (open && user) {
@@ -79,10 +93,22 @@ const Chat = () => {
     }
   }, [open, user, messages]);
 
-  // تمرير لآخر رسالة عند التحديث
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // تحميل مزيد من الرسائل عند التمرير لأعلى
+  useEffect(() => {
+    const handleScroll = () => {
+      if (chatBoxRef.current && chatBoxRef.current.scrollTop === 0) {
+        setLimit((prev) => prev + 10);
+      }
+    };
+
+    const ref = chatBoxRef.current;
+    if (ref) ref.addEventListener("scroll", handleScroll);
+    return () => ref?.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleSendMessage = async () => {
     if (!input.trim() || !user) return;
@@ -95,14 +121,16 @@ const Chat = () => {
       senderPhoto: user.photoURL,
       reactions: {},
       seenBy: [user.id],
+      replyTo,
     });
 
     setInput("");
+    setReplyTo(null);
   };
 
   return (
     <>
-      {/* زر الأيقونة */}
+      {/* زر فتح الشات */}
       <button
         className="fixed bottom-12 left-2 z-50 p-3 rounded-full bg-blue-300 text-white shadow-lg hover:bg-blue-700 transition"
         onClick={() => setOpen(!open)}
@@ -122,22 +150,23 @@ const Chat = () => {
           animate={{ opacity: 1, y: 0 }}
           className="fixed bottom-20 right-4 w-[90%] max-w-sm bg-white border rounded-2xl shadow-2xl z-50 flex flex-col h-[450px]"
         >
-          {/* رأس المحادثة */}
+          {/* الرأس */}
           <div className="p-3 border-b text-base font-semibold bg-blue-300 text-white rounded-t-2xl">
             الدردشة الجماعية
           </div>
 
-          {/* الرسائل */}
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 bg-slate-300">
+          {/* صندوق الرسائل */}
+          <div
+            ref={chatBoxRef}
+            className="flex-1 overflow-y-auto px-3 py-2 space-y-2 bg-slate-300"
+          >
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex ${
-                  msg.senderId === user?.id ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${msg.senderId === user?.id ? "justify-end" : "justify-start"
+                  }`}
               >
                 <div className="flex items-end gap-2 max-w-[75%]">
-                  {/* صورة المرسل */}
                   {msg.senderId !== user?.id && (
                     <img
                       src={msg.senderPhoto}
@@ -145,26 +174,33 @@ const Chat = () => {
                       className="w-7 h-7 rounded-full object-cover"
                     />
                   )}
-                  {/* فقاعة الرسالة */}
                   <div
-                    className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow relative
-                    ${
-                      msg.senderId === user?.id
+                    onDoubleClick={() =>
+                      setReplyTo({
+                        id: msg.id,
+                        text: msg.text,
+                        senderName: msg.senderName,
+                      })
+                    }
+                    className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow relative cursor-pointer
+                      ${msg.senderId === user?.id
                         ? "bg-blue-300 text-black rounded-br-none"
-                        : "bg-gray-200 text-gray-900  rounded-bl-none"
-                    }`}
+                        : "bg-gray-200 text-gray-900 rounded-bl-none"
+                      }`}
                   >
-                    {/* اسم المرسل */}
+                    {msg.replyTo && (
+                      <div className="text-xs text-gray-600 border-l-2 pl-2 mb-1 border-blue-500">
+                        ردًا على: <strong>{msg.replyTo.senderName}</strong> — “
+                        {msg.replyTo.text.slice(0, 40)}...”
+                      </div>
+                    )}
                     {msg.senderId !== user?.id && (
                       <div className="text-xs font-semibold text-gray-500 mb-1">
                         {msg.senderName}
                       </div>
                     )}
-                    {/* نص الرسالة */}
                     {msg.text}
-                    {/* إيموجيات الريأكشن */}
 
-                    {/* حالة Seen */}
                     {msg.senderId === user?.id &&
                       (msg.seenBy?.length || 0) > 1 && (
                         <div className="text-[10px] text-gray-500 mt-1">
@@ -177,6 +213,24 @@ const Chat = () => {
             ))}
             <div ref={messagesEndRef} />
           </div>
+
+          {/* مربع الرد على رسالة */}
+          {replyTo && (
+            <div className="p-2 text-sm bg-gray-200 border-l-4 border-blue-500 mb-1 mx-3 rounded">
+              <div className="flex justify-between items-center">
+                <span>
+                  الرد على <strong>{replyTo.senderName}</strong>: “
+                  {replyTo.text.slice(0, 50)}...”
+                </span>
+                <button
+                  onClick={() => setReplyTo(null)}
+                  className="text-xs text-red-500 ml-4"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* إدخال الرسالة */}
           <form

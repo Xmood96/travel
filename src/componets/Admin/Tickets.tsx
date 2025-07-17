@@ -30,6 +30,7 @@ export default function TicketsAdmin() {
     isPaid: false,
     amountDue: "",
     currency: "USD",
+    isClosed: false,
   });
 
   const { data: currencies } = useCurrencies();
@@ -41,7 +42,7 @@ export default function TicketsAdmin() {
   const users = usersQuery.data || [];
 
   const getDateObject = (
-    date: string | { seconds: number } | Date | undefined
+    date: string | { seconds: number } | Date | undefined,
   ): Date => {
     if (!date) return new Date();
     if (typeof date === "string") return new Date(date);
@@ -66,7 +67,7 @@ export default function TicketsAdmin() {
   const totalPages = Math.ceil(filteredTickets.length / ITEMS_PER_PAGE);
   const currentTickets = filteredTickets.slice(
     (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
+    page * ITEMS_PER_PAGE,
   );
 
   const confirmDelete = (id: string) => {
@@ -91,7 +92,7 @@ export default function TicketsAdmin() {
             ticketToDeleteObj.ticketNumber,
             user.id,
             user.name,
-            agentName
+            agentName,
           );
         }
 
@@ -112,6 +113,7 @@ export default function TicketsAdmin() {
       isPaid: ticket.isPaid || false,
       amountDue: ticket.amountDue?.toString() || "",
       currency: "USD", // Default to USD for admin editing
+      isClosed: ticket.isClosed || false,
     });
   };
 
@@ -160,11 +162,20 @@ export default function TicketsAdmin() {
         });
       }
 
+      if (editForm.isClosed !== (editingTicket.isClosed || false)) {
+        changes.push({
+          field: "isClosed",
+          oldValue: editingTicket.isClosed || false,
+          newValue: editForm.isClosed,
+        });
+      }
+
       const ticketRef = doc(db, "tickets", editingTicket.id);
       await updateDoc(ticketRef, {
         partialPayment: partialPaymentUSD,
         isPaid: editForm.isPaid,
         amountDue: amountDueUSD,
+        isClosed: editForm.isClosed,
       });
 
       // Log the update if there were changes
@@ -174,7 +185,7 @@ export default function TicketsAdmin() {
           editingTicket.ticketNumber,
           user.id,
           user.name,
-          changes
+          changes,
         );
       }
 
@@ -275,9 +286,16 @@ export default function TicketsAdmin() {
                 className="bg-slate-100 rounded-xl shadow-sm p-3 flex justify-between items-center"
               >
                 <div className="text-right">
-                  <p className="font-bold text-sm text-gray-800">
-                    تذكرة #{ticket.ticketNumber}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-sm text-gray-800">
+                      تذكرة #{ticket.ticketNumber}
+                    </p>
+                    {ticket.isClosed && (
+                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                        مغلقة
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500">
                     المستخدم:{" "}
                     <span className="text-blue-500">
@@ -286,10 +304,12 @@ export default function TicketsAdmin() {
                   </p>
                   <div className="flex gap-3 text-sm mt-1 text-gray-600">
                     <p>
-                      السعر: {getFormattedBalance(ticket.paidAmount, "USD")}{" "}
+                      السعر:{" "}
+                      {getFormattedBalance(ticket.paidAmount, "USD")}{" "}
                     </p>
                     <p>
-                      المستحق: {getFormattedBalance(ticket.amountDue, "USD")}{" "}
+                      المستحق:{" "}
+                      {getFormattedBalance(ticket.amountDue, "USD")}{" "}
                     </p>
                     {(ticket.partialPayment || 0) > 0 && !ticket.isPaid && (
                       <p className="text-green-600">
@@ -316,7 +336,7 @@ export default function TicketsAdmin() {
                       متبقي{" "}
                       {getFormattedBalance(
                         ticket.amountDue - (ticket.partialPayment || 0),
-                        "USD"
+                        "USD",
                       )}
                     </span>
                   )}
@@ -455,7 +475,7 @@ export default function TicketsAdmin() {
                       const amountDue = Number(editForm.amountDue);
                       if (Number(raw) > amountDue && amountDue > 0) {
                         toast.warn(
-                          "الدفع الجزئي لا يمكن أن يتجاوز المبلغ المستحق"
+                          "الدفع الجزئي لا يمكن أن يتجاوز المبلغ المستحق",
                         );
                         return;
                       }
@@ -475,6 +495,20 @@ export default function TicketsAdmin() {
                   }
                 />
                 <label className="text-sm">مدفوعة بالكامل</label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-warning"
+                  checked={editForm.isClosed}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, isClosed: e.target.checked })
+                  }
+                />
+                <label className="text-sm">
+                  إغلاق التذكرة (منع التعديل من قبل المستخدمين)
+                </label>
               </div>
             </div>
 
