@@ -120,6 +120,23 @@ export default function AddTicketForm() {
     }
   };
 
+  // Set default values for services
+  useEffect(() => {
+    if (formType === "service" && selectedService && form.currency) {
+      const selectedCurrency = getCurrencyByCode(form.currency);
+      if (selectedCurrency) {
+        const serviceAmountInCurrency = Math.ceil(
+          selectedService.price * selectedCurrency.exchangeRate,
+        );
+        setForm((prev) => ({
+          ...prev,
+          paidAmount: serviceAmountInCurrency.toString(), // Set paid amount to service price
+          agentId: user?.id || "", // Set agent ID to current user for services
+        }));
+      }
+    }
+  }, [formType, selectedService, form.currency, user?.id]);
+
   const handleSubmit = async () => {
     // التحقق من الحقول المطلوبة بناء على نوع المستخدم
     if (!form.ticketNumber || !form.agentId) {
@@ -401,7 +418,7 @@ export default function AddTicketForm() {
         >
           <option disabled value="">
             اختر المستخدم الذي حرر{" "}
-            {formType === "service" ? "الخدمة" : "التذكرة"}
+            {formType === "service" ? "الخدم��" : "التذكرة"}
           </option>
           {users?.map((u) => (
             <option key={u.id} value={u.id}>
@@ -594,7 +611,7 @@ export default function AddTicketForm() {
           <>
             <p className="text-blue-600">
               • {formType === "service" ? "الخدمات" : "التذاكر"} المحررة م�� قبل
-              الأدمن تُعتبر مدفوعة تلقائياً
+              الأ��من تُعتبر مدفوعة تلقائياً
             </p>
             <p className="text-blue-600">
               • يمكن تحديد المستخدم الذي حرر{" "}
