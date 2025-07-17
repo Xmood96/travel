@@ -35,7 +35,7 @@ export default function AddTicketForm() {
   const [loading, setLoading] = useState(false);
 
   const { createTicket, agentsQuery, updateAgentBalance } = useAppData();
-  const { data: users } = useUsersWithStats(); // جلب قائمة المستخدمين
+  const { data: users } = useUsersWithStats(); // جلب قائمة ��لمستخدمين
   const { user } = useAuth();
   const { data: currencies } = useCurrencies();
   const { getCurrencyByCode } = useCurrencyUtils();
@@ -181,7 +181,7 @@ export default function AddTicketForm() {
     try {
       console.log("Form Data: ", form);
 
-      // الحصول عل�� بيانات الوكيل المختار
+      // الحصول عل�� بيانات الوكيل ��لمختار
       const agent = agentsQuery.data?.find((a) => a.id === form.agentId);
       if (!agent) {
         toast.error("لم يتم العثور على البائع المحدد");
@@ -571,7 +571,7 @@ export default function AddTicketForm() {
           </select>
         </div>
 
-        {/* الدفع الجزئي من المستحق - يظهر فقط عند اختيار السداد الجزئي */}
+        {/* الدفع الجزئي من المستحق - يظهر ��قط عند اختيار السداد الجزئي */}
         {form.paymentType === "partial" && (
           <div className="grid grid-cols-2">
             <h1 className="text-center text-blue-800">
@@ -630,7 +630,7 @@ export default function AddTicketForm() {
           <>
             <p className="text-blue-600">
               • {formType === "service" ? "الخدمات" : "التذاكر"} المحررة م�� قبل
-              الأدمن تُعتبر مدفوعة تلقائياً
+              الأدمن تُعتبر مدفوعة تل��ائياً
             </p>
             <p className="text-blue-600">
               • يمكن تحديد المستخدم الذي حرر{" "}
@@ -639,13 +639,28 @@ export default function AddTicketForm() {
           </>
         )}
         {formType === "service" && (
-          <p className="text-green-600">
-            • <strong>للخدمات:</strong> المبلغ المستحق يجب أن يكون أكبر من أو
-            يساوي سعر الخدمة الأساسي
+          <>
+            <p className="text-green-600">
+              • <strong>للخدمات:</strong> سعر الخدمة يُحدد تلقائياً ولا يمكن
+              تعديله
+            </p>
+            <p className="text-green-600">
+              • <strong>للخدمات:</strong> المبلغ المستحق يجب أن يكون أكبر من أو
+              يساوي سعر الخدمة الأساسي
+            </p>
+            <p className="text-green-600">
+              • <strong>للخدمات:</strong> يتم تعيين المستخدم الحالي كبائع
+              تلقائياً
+            </p>
+          </>
+        )}
+        {formType === "ticket" && (
+          <p className="text-blue-600">
+            • <strong>للتذاكر:</strong> يجب اختيار البائع ومبلغ الدفع من محفظته
           </p>
         )}
         <p className="text-green-600">
-          • <strong>السداد الكامل:</strong> يتم دفع كامل المبلغ المستحق
+          • <strong>السداد الكامل:</strong> يتم دف�� كامل المبلغ المستحق
         </p>
         <p className="text-orange-600">
           • <strong>السداد الجزئي:</strong> يتم دفع جزء من المبلغ المستحق
