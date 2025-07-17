@@ -44,6 +44,12 @@ const Dashboard = () => {
     deleteAgent,
   } = useAppData();
 
+  // جلب الخدمات
+  const serviceTicketsQuery = useQuery({
+    queryKey: ["serviceTickets"],
+    queryFn: getServiceTickets,
+  });
+
   const [name, setName] = useState("");
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const { updateAgentBalance } = useAppData();
