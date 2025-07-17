@@ -139,8 +139,13 @@ export default function AddTicketForm() {
 
   const handleSubmit = async () => {
     // التحقق من الحقول المطلوبة بناء على نوع المستخدم
-    if (!form.ticketNumber || !form.agentId) {
-      return toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+    if (!form.ticketNumber) {
+      return toast.error("يرجى تعبئة رقم التذكرة/الخدمة");
+    }
+
+    // For regular tickets, agent ID is required, for services it's auto-set to current user
+    if (formType === "ticket" && !form.agentId) {
+      return toast.error("يرجى اختيار البائع");
     }
 
     // للأدمن، يجب اختيار المستخدم
@@ -377,7 +382,7 @@ export default function AddTicketForm() {
       {/* عرض معلومات الخدمة المختارة */}
       {formType === "service" && selectedService && (
         <div className="bg-green-50 p-3 rounded-lg">
-          <p className="text-green-700 font-semibold">الخدمة المختارة:</p>
+          <p className="text-green-700 font-semibold">الخ��مة المختارة:</p>
           <p className="text-green-600">{selectedService.name}</p>
           <p className="text-green-600">
             السعر الأساسي: ${selectedService.price}
@@ -411,14 +416,14 @@ export default function AddTicketForm() {
             setForm({
               ...form,
               selectedUserId: e.target.value,
-              // إذا كان المستخدم المحدد أد��ن، جعل التذكرة مدفوعة تلقائياً
+              // إذا كان المستخدم المحدد أد��ن، جعل ��لتذكرة مدفوعة تلقائياً
               isPaid: selectedUser?.role === "admin" ? true : form.isPaid,
             });
           }}
         >
           <option disabled value="">
             اختر المستخدم الذي حرر{" "}
-            {formType === "service" ? "الخدم��" : "التذكرة"}
+            {formType === "service" ? "الخدمة" : "التذكرة"}
           </option>
           {users?.map((u) => (
             <option key={u.id} value={u.id}>
@@ -573,7 +578,7 @@ export default function AddTicketForm() {
                   const amountDue = Number(form.amountDue);
                   if (Number(raw) > amountDue && amountDue > 0) {
                     toast.warn(
-                      "المبلغ المدفوع لا يمكن أن يتجاوز المبلغ المستحق",
+                      "المبلغ المدف��ع لا يمكن أن يتجاوز المبلغ المستحق",
                     );
                     return;
                   }
@@ -611,7 +616,7 @@ export default function AddTicketForm() {
           <>
             <p className="text-blue-600">
               • {formType === "service" ? "الخدمات" : "التذاكر"} المحررة م�� قبل
-              الأ��من تُعتبر مدفوعة تلقائياً
+              الأدمن تُعتبر مدفوعة تلقائياً
             </p>
             <p className="text-blue-600">
               • يمكن تحديد المستخدم الذي حرر{" "}
