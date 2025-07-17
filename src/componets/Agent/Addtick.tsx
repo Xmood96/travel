@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { Ticket, TicketSquare, Briefcase } from "lucide-react";
+import { Square, Briefcase } from "lucide-react";
 import { useAppData } from "../../api/useAppData";
 import { useUsersWithStats } from "../../api/getusers";
 import { getActiveServices } from "../../api/serviceService";
@@ -405,7 +405,7 @@ export default function AddTicketForm() {
             setForm({
               ...form,
               selectedUserId: e.target.value,
-              // إذا كان المستخدم المحدد أدمن، جعل التذكرة مدفوعة تلقائياً
+              // إذا كان المستخد�� المحدد أدمن، جعل التذكرة مدفوعة تلقائياً
               isPaid: selectedUser?.role === "admin" ? true : form.isPaid,
             });
           }}
@@ -643,7 +643,7 @@ export default function AddTicketForm() {
         {loading ? (
           <AiOutlineLoading3Quarters className="animate-spin mx-auto" />
         ) : (
-          `إضافة ${formType === "service" ? "الخدمة" : "التذك��ة"}`
+          `إضافة ${formType === "service" ? "الخدمة" : "التذكرة"}`
         )}
       </button>
     </motion.div>
