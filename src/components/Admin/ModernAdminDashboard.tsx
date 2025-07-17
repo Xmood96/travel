@@ -16,6 +16,8 @@ import { motion, AnimatePresence } from "framer-motion";
 // Import the modern interfaces
 import ModernUsers from "./ModernUsers";
 import ModernTickets from "./ModernTickets";
+import ServiceTickets from "../../componets/Admin/ServiceTickets";
+import SettingsComponent from "../../componets/Admin/Settings";
 import Dashboard from "../../componets/Admin/Dashboard"; // Keep the existing dashboard for stats
 
 // Modern UI Components
