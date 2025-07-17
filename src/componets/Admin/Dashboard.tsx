@@ -180,20 +180,47 @@ const Dashboard = () => {
   };
 
   const allTickets = ticketsQuery.data || [];
+  const allServiceTickets = serviceTicketsQuery.data || [];
 
-  // حساب المب��لغ المالية مع مراعاة الدفع الجزئي
-  const payed = allTickets.reduce((sum, t) => sum + Number(t.paidAmount), 0);
+  // حساب المبالغ المالية مع مراعاة الدفع الجزئي (تذاكر + خدمات)
+  const ticketsPayed = allTickets.reduce(
+    (sum, t) => sum + Number(t.paidAmount),
+    0,
+  );
+  const servicesPayed = allServiceTickets.reduce(
+    (sum, s) => sum + Number(s.paidAmount),
+    0,
+  );
+  const payed = ticketsPayed + servicesPayed;
 
-  const totalDue = allTickets.reduce((sum, t) => {
+  const ticketsTotalDue = allTickets.reduce((sum, t) => {
     const partialPayment = (t as any).partialPayment || 0;
     const remaining = Number(t.amountDue) - partialPayment;
     return sum + (t.isPaid ? 0 : remaining);
   }, 0);
 
-  const totalProfit = allTickets.reduce(
+  const servicesTotalDue = allServiceTickets.reduce((sum, s) => {
+    const partialPayment = (s as any).partialPayment || 0;
+    const remaining = Number(s.amountDue) - partialPayment;
+    return sum + (s.isPaid ? 0 : remaining);
+  }, 0);
+
+  const totalDue = ticketsTotalDue + servicesTotalDue;
+
+  // حساب الربح: للتذاكر = المستحق - المدفوع من المحفظة
+  // للخدمات = المستحق - سعر الخدمة
+  const ticketsProfit = allTickets.reduce(
     (sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)),
     0,
   );
+
+  const servicesProfit = allServiceTickets.reduce(
+    (sum, s) =>
+      sum + (Number(s.amountDue) - Number(s.serviceBasePrice || s.paidAmount)),
+    0,
+  );
+
+  const totalProfit = ticketsProfit + servicesProfit;
 
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -699,7 +726,7 @@ const Dashboard = () => {
                 setAddModalOpen2(false);
               }}
             >
-              إضافة للرصيد
+              إض��فة للرصيد
             </Button>
           </div>
         </div>
@@ -711,7 +738,7 @@ const Dashboard = () => {
         onConfirm={handleDeleteAgent}
         title="تأكيد حذف الوكيل"
         message="هل أن�� متأكد أنك تريد حذف هذا الوكيل؟ لا يمكن التراجع عن هذا الإجراء."
-        confirmText="ح��ف الوكيل"
+        confirmText="ح����ف الوكيل"
         cancelText="إلغاء"
         confirmColor="bg-red-500 hover:bg-red-600"
       />
