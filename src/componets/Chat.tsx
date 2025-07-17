@@ -131,7 +131,56 @@ const Chat = () => {
 
     setInput("");
     setReplyTo(null);
+    setShowEmojiPicker(false);
   };
+
+  const scrollToMessage = (messageId: string) => {
+    const messageElement = messageRefs.current[messageId];
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      messageElement.style.backgroundColor = "rgba(59, 130, 246, 0.3)";
+      setTimeout(() => {
+        messageElement.style.backgroundColor = "";
+      }, 2000);
+    }
+  };
+
+  const toggleStarMessage = async (messageId: string) => {
+    if (!user) return;
+    const message = messages.find((m) => m.id === messageId);
+    if (!message) return;
+
+    const isCurrentlyStarred = message.starredBy?.includes(user.id) || false;
+    const updatedStarredBy = isCurrentlyStarred
+      ? (message.starredBy || []).filter((id) => id !== user.id)
+      : [...(message.starredBy || []), user.id];
+
+    const msgRef = doc(db, "chat", messageId);
+    await updateDoc(msgRef, {
+      starredBy: updatedStarredBy,
+      isStarred: updatedStarredBy.length > 0,
+    });
+  };
+
+  const addEmoji = (emoji: string) => {
+    setInput((prev) => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const commonEmojis = [
+    "😀",
+    "😂",
+    "😍",
+    "😭",
+    "😱",
+    "👍",
+    "👎",
+    "❤️",
+    "🔥",
+    "🎉",
+    "👏",
+    "🙏",
+  ];
 
   return (
     <>
