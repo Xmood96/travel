@@ -2,15 +2,23 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Ticket, TicketSquare, Briefcase } from "lucide-react";
 import { useAppData } from "../../api/useAppData";
 import { useUsersWithStats } from "../../api/getusers";
-import type { Ticket } from "../../types";
+import { getActiveServices } from "../../api/serviceService";
+import type { Ticket as TicketType, ServiceTicket, Service } from "../../types";
 import { useAuth } from "../../context/AuthContext";
 import { useCurrencies, useCurrencyUtils } from "../../api/useCurrency";
 import { convertToUSD } from "../../api/currencyService";
 import { logTicketCreated } from "../../api/loggingService";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../../api/Firebase";
 
 export default function AddTicketForm() {
+  const [formType, setFormType] = useState<"ticket" | "service">("ticket");
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+
   const [form, setForm] = useState({
     ticketNumber: "",
     agentId: "",
@@ -21,6 +29,7 @@ export default function AddTicketForm() {
     isPaid: false,
     currency: "USD", // العملة المختارة
     paymentType: "full" as "full" | "partial", // نوع الدفع
+    serviceId: "", // للخدمات
   });
 
   const [loading, setLoading] = useState(false);
@@ -30,6 +39,20 @@ export default function AddTicketForm() {
   const { user } = useAuth();
   const { data: currencies } = useCurrencies();
   const { getCurrencyByCode } = useCurrencyUtils();
+
+  // Load services when component mounts
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const servicesData = await getActiveServices();
+        setServices(servicesData);
+      } catch (error) {
+        console.error("Error loading services:", error);
+        toast.error("فشل في تحميل الخدمات");
+      }
+    };
+    loadServices();
+  }, []);
 
   // للأدمن، يتم تعيين التذاكر كمدفوعة افتراضياً
   useEffect(() => {
@@ -48,10 +71,65 @@ export default function AddTicketForm() {
     }
   }, [form.selectedUserId, users, user]);
 
+  // Update selected service when service ID changes
+  useEffect(() => {
+    if (form.serviceId) {
+      const service = services.find((s) => s.id === form.serviceId);
+      setSelectedService(service || null);
+      // Reset amount due when changing service
+      if (service) {
+        const selectedCurrency = getCurrencyByCode(form.currency);
+        if (selectedCurrency) {
+          // Convert service price from USD to selected currency
+          const serviceAmountInCurrency = Math.ceil(
+            service.price * selectedCurrency.exchangeRate,
+          );
+          setForm((prev) => ({
+            ...prev,
+            amountDue: serviceAmountInCurrency.toString(),
+          }));
+        }
+      }
+    } else {
+      setSelectedService(null);
+    }
+  }, [form.serviceId, services, form.currency, getCurrencyByCode]);
+
+  // Update service price when currency changes
+  useEffect(() => {
+    if (formType === "service" && selectedService) {
+      const selectedCurrency = getCurrencyByCode(form.currency);
+      if (selectedCurrency) {
+        const serviceAmountInCurrency = Math.ceil(
+          selectedService.price * selectedCurrency.exchangeRate,
+        );
+        setForm((prev) => ({
+          ...prev,
+          amountDue: serviceAmountInCurrency.toString(),
+        }));
+      }
+    }
+  }, [form.currency, selectedService, formType, getCurrencyByCode]);
+
   // التحقق من الصلاحيات - يمكن للأدمن والعميل الوصول
   if (!user || (user.role !== "admin" && user.role !== "agent")) {
     return null;
   }
+
+  const createServiceTicket = async (
+    serviceTicketData: Omit<ServiceTicket, "id">,
+  ) => {
+    try {
+      const docRef = await addDoc(collection(db, "serviceTickets"), {
+        ...serviceTicketData,
+        createdAt: new Date().toISOString(),
+      });
+      return { id: docRef.id, ...serviceTicketData };
+    } catch (error) {
+      console.error("Error creating service ticket:", error);
+      throw error;
+    }
+  };
 
   const handleSubmit = async () => {
     // التحقق من الحقول المطلوبة بناء على نوع المستخدم
@@ -66,6 +144,26 @@ export default function AddTicketForm() {
 
     if (!form.paidAmount || !form.amountDue) {
       return toast.error("يرجى إدخال المبالغ المطلوبة");
+    }
+
+    // For services, check if service is selected and amount is valid
+    if (formType === "service") {
+      if (!form.serviceId || !selectedService) {
+        return toast.error("يرجى اختيار الخدمة");
+      }
+
+      const selectedCurrency = getCurrencyByCode(form.currency);
+      if (selectedCurrency) {
+        const amountDueInUSD = convertToUSD(
+          Number(form.amountDue),
+          selectedCurrency,
+        );
+        if (amountDueInUSD < selectedService.price) {
+          return toast.error(
+            `المبلغ المستحق يجب أن يكون أكبر من أو يساوي سعر الخدمة (${selectedService.price} دولار)`,
+          );
+        }
+      }
     }
 
     setLoading(true);
@@ -91,27 +189,25 @@ export default function AddTicketForm() {
       // Convert amounts to USD for storage
       const paidAmountUSD = convertToUSD(
         Number(form.paidAmount),
-        selectedCurrency
+        selectedCurrency,
       );
       const amountDueUSD = convertToUSD(
         Number(form.amountDue),
-        selectedCurrency
+        selectedCurrency,
       );
       // Calculate partial payment based on payment type
       let partialPaymentUSD = 0;
       if (form.paymentType === "partial" && form.partialPayment) {
         partialPaymentUSD = convertToUSD(
           Number(form.partialPayment),
-          selectedCurrency
+          selectedCurrency,
         );
       }
-      // للدفع الكامل، لا نضع قيمة في partialPayment، بل نعتمد على isPaid
 
       // حساب الرصيد الجديد (يمكن أن يكون سالب)
       const newBalance = agent.balance - paidAmountUSD;
 
-      // إضافة التذكرة مع معرف المستخدم المختار أو المستخدم الحالي
-      const ticketData = {
+      const commonData = {
         ticketNumber: form.ticketNumber,
         agentId: form.agentId,
         paidAmount: paidAmountUSD, // Store in USD
@@ -129,9 +225,26 @@ export default function AddTicketForm() {
             : form.isPaid,
       };
 
-      const createdTicket = await createTicket.mutateAsync(
-        ticketData as unknown as Omit<Ticket, "id">
-      );
+      let createdItem;
+
+      if (formType === "service" && selectedService) {
+        // إضافة تذكرة خدمة
+        const serviceTicketData = {
+          ...commonData,
+          serviceId: selectedService.id,
+          serviceName: selectedService.name,
+          serviceBasePrice: selectedService.price,
+        };
+
+        createdItem = await createServiceTicket(
+          serviceTicketData as unknown as Omit<ServiceTicket, "id">,
+        );
+      } else {
+        // إضافة تذكرة عادية
+        createdItem = await createTicket.mutateAsync(
+          commonData as unknown as Omit<TicketType, "id">,
+        );
+      }
 
       // تحديث رصيد الوكيل (حتى لو أصبح سالب)
       await updateAgentBalance.mutateAsync({
@@ -140,7 +253,7 @@ export default function AddTicketForm() {
       });
 
       // Log the ticket creation
-      if (user && createdTicket) {
+      if (user && createdItem) {
         const performedByUserId =
           user.role === "admin" ? form.selectedUserId : user.id;
         const performedByUser =
@@ -150,16 +263,17 @@ export default function AddTicketForm() {
 
         if (performedByUser) {
           await logTicketCreated(
-            (createdTicket as any).id || "unknown",
+            (createdItem as any).id || "unknown",
             form.ticketNumber,
             performedByUserId || user.id,
             performedByUser.name || user.name,
-            agent.name
+            agent.name,
           );
         }
       }
 
-      toast.success("✅ تم إضافة التذكرة وتحديث الرصيد بنجاح!");
+      const itemType = formType === "service" ? "الخدمة" : "التذكرة";
+      toast.success(`✅ تم إضافة ${itemType} وتحديث الرصيد بنجاح!`);
 
       // إعادة تعيين النموذج
       setForm({
@@ -172,9 +286,11 @@ export default function AddTicketForm() {
         isPaid: user?.role === "admin" ? true : false,
         currency: "USD",
         paymentType: "full",
+        serviceId: "",
       });
+      setSelectedService(null);
     } catch (err) {
-      console.error("❌ خطأ في إضافة التذكرة:", err);
+      console.error("❌ خطأ في الإضافة:", err);
       toast.error("حدث خطأ أثناء الإضافة");
     } finally {
       setLoading(false);
@@ -188,17 +304,80 @@ export default function AddTicketForm() {
       className="bg-white p-4 rounded-xl shadow-md space-y-3"
     >
       <h2 className="text-lg font-bold text-right text-blue-600">
-        إضافة تذكرة جديدة {user?.role === "admin" ? "(الأدمن)" : ""}
+        إضافة {formType === "service" ? "خدمة" : "تذكرة"} جديدة{" "}
+        {user?.role === "admin" ? "(الأدمن)" : ""}
       </h2>
+
+      {/* اختيار نوع النموذج */}
+      <div className="flex bg-gray-100 rounded-lg p-1">
+        <button
+          onClick={() => {
+            setFormType("ticket");
+            setForm((prev) => ({ ...prev, serviceId: "", amountDue: "" }));
+            setSelectedService(null);
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            formType === "ticket"
+              ? "bg-blue-500 text-white shadow-sm"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <TicketSquare className="w-4 h-4" />
+          تذكرة
+        </button>
+        <button
+          onClick={() => {
+            setFormType("service");
+            setForm((prev) => ({ ...prev, amountDue: "" }));
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            formType === "service"
+              ? "bg-green-500 text-white shadow-sm"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <Briefcase className="w-4 h-4" />
+          خدمة
+        </button>
+      </div>
 
       {/* رقم التذكرة */}
       <input
         type="text"
-        placeholder="رقم التذكرة"
+        placeholder={`رقم ${formType === "service" ? "الخدمة" : "التذكرة"}`}
         value={form.ticketNumber}
         onChange={(e) => setForm({ ...form, ticketNumber: e.target.value })}
         className="input bg-blue-100 text-black input-bordered w-full text-right"
       />
+
+      {/* اختيار الخدمة - للخدمات فقط */}
+      {formType === "service" && (
+        <select
+          className="select bg-green-100 text-black select-bordered w-full text-right"
+          value={form.serviceId}
+          onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
+        >
+          <option disabled value="">
+            اختر الخدمة
+          </option>
+          {services.map((service) => (
+            <option key={service.id} value={service.id}>
+              {service.name} (السعر الأساسي: ${service.price})
+            </option>
+          ))}
+        </select>
+      )}
+
+      {/* عرض معلومات الخدمة المختارة */}
+      {formType === "service" && selectedService && (
+        <div className="bg-green-50 p-3 rounded-lg">
+          <p className="text-green-700 font-semibold">الخدمة المختارة:</p>
+          <p className="text-green-600">{selectedService.name}</p>
+          <p className="text-green-600">
+            السعر الأساسي: ${selectedService.price}
+          </p>
+        </div>
+      )}
 
       {/* اختيار العملة */}
       <select
@@ -226,13 +405,14 @@ export default function AddTicketForm() {
             setForm({
               ...form,
               selectedUserId: e.target.value,
-              // إذ�� كان المستخدم المحدد أدمن، جعل التذكرة مدفوعة تلقائياً
+              // إذا كان المستخدم المحدد أدمن، جعل التذكرة مدفوعة تلقائياً
               isPaid: selectedUser?.role === "admin" ? true : form.isPaid,
             });
           }}
         >
           <option disabled value="">
-            اختر المستخدم الذي حرر التذكرة
+            اختر المستخدم الذي حرر{" "}
+            {formType === "service" ? "الخدمة" : "التذكرة"}
           </option>
           {users?.map((u) => (
             <option key={u.id} value={u.id}>
@@ -258,7 +438,7 @@ export default function AddTicketForm() {
         ))}
       </select>
 
-      {/* المبال�� */}
+      {/* المبالغ */}
       <div className="flex flex-col gap-2">
         <div className="grid grid-cols-2">
           <h1 className="text-center text-blue-800">المدفوع من المحفظة</h1>
@@ -275,21 +455,21 @@ export default function AddTicketForm() {
               const raw = e.target.value.replace(/,/g, "");
               if (/^\d*$/.test(raw)) {
                 const selectedAgent = agentsQuery.data?.find(
-                  (agent) => agent.id === form.agentId
+                  (agent) => agent.id === form.agentId,
                 );
 
                 const selectedCurrency = getCurrencyByCode(form.currency);
                 if (selectedAgent && selectedCurrency) {
                   const amountInUSD = convertToUSD(
                     Number(raw),
-                    selectedCurrency
+                    selectedCurrency,
                   );
                   if (amountInUSD > selectedAgent.balance) {
                     const newBalance = selectedAgent.balance - amountInUSD;
                     toast.warn(
                       `⚠️ سيصبح رصيد البائع: ${newBalance.toLocaleString(
-                        "en-US"
-                      )} USD`
+                        "en-US",
+                      )} USD`,
                     );
                   }
                 }
@@ -305,7 +485,11 @@ export default function AddTicketForm() {
           <h1 className="text-center text-blue-800">المستحق</h1>
           <input
             type="text"
-            placeholder=""
+            placeholder={
+              formType === "service" && selectedService
+                ? `الحد الأدنى: ${Math.ceil(selectedService.price * (getCurrencyByCode(form.currency)?.exchangeRate || 1))}`
+                : ""
+            }
             inputMode="numeric"
             value={
               form.amountDue === ""
@@ -315,6 +499,21 @@ export default function AddTicketForm() {
             onChange={(e) => {
               const raw = e.target.value.replace(/,/g, "");
               if (/^\d*$/.test(raw)) {
+                // For services, validate minimum amount
+                if (formType === "service" && selectedService) {
+                  const selectedCurrency = getCurrencyByCode(form.currency);
+                  if (selectedCurrency) {
+                    const amountInUSD = convertToUSD(
+                      Number(raw),
+                      selectedCurrency,
+                    );
+                    if (amountInUSD < selectedService.price && raw !== "") {
+                      toast.warn(
+                        `المبلغ يجب أن يكون أكبر من أو يساوي سعر الخدمة (${selectedService.price} دولار)`,
+                      );
+                    }
+                  }
+                }
                 setForm({ ...form, amountDue: raw });
               }
             }}
@@ -337,7 +536,7 @@ export default function AddTicketForm() {
                 paymentType,
                 partialPayment:
                   paymentType === "full" ? "" : form.partialPayment,
-                // إذا تم اختيار دفع جز��ي، يصب�� غير مدفوع تلقائياً
+                // إذا تم اختيار دفع جزئي، يصبح غير مدفوع تلقائياً
                 isPaid: paymentType === "partial" ? false : form.isPaid,
               });
             }}
@@ -368,7 +567,7 @@ export default function AddTicketForm() {
                   const amountDue = Number(form.amountDue);
                   if (Number(raw) > amountDue && amountDue > 0) {
                     toast.warn(
-                      "المبلغ ال��دفوع لا يمكن أن يتجاوز المبلغ المستحق"
+                      "المبلغ المدفوع لا يمكن أن يتجاوز المبلغ المستحق",
                     );
                     return;
                   }
@@ -405,12 +604,20 @@ export default function AddTicketForm() {
         {user?.role === "admin" && (
           <>
             <p className="text-blue-600">
-              • التذاكر المحررة من قبل الأدمن تُعتبر مدفوعة تلقائياً
+              • {formType === "service" ? "الخدمات" : "التذاكر"} المحررة من قبل
+              الأدمن تُعتبر مدفوعة تلقائياً
             </p>
             <p className="text-blue-600">
-              • يمكن تحديد المستخدم الذي حرر التذكرة
+              • يمكن تحديد المستخدم الذي حرر{" "}
+              {formType === "service" ? "الخدمة" : "التذكرة"}
             </p>
           </>
+        )}
+        {formType === "service" && (
+          <p className="text-green-600">
+            • <strong>للخدمات:</strong> المبلغ المستحق يجب أن يكون أكبر من أو
+            يساوي سعر الخدمة الأساسي
+          </p>
         )}
         <p className="text-green-600">
           • <strong>السداد الكامل:</strong> يتم دفع كامل المبلغ المستحق
@@ -425,14 +632,18 @@ export default function AddTicketForm() {
       </div>
 
       <button
-        className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl py-3 w-full font-bold transition-colors"
+        className={`${
+          formType === "service"
+            ? "bg-green-500 hover:bg-green-600"
+            : "bg-blue-500 hover:bg-blue-600"
+        } text-white rounded-xl py-3 w-full font-bold transition-colors`}
         onClick={handleSubmit}
         disabled={loading}
       >
         {loading ? (
           <AiOutlineLoading3Quarters className="animate-spin mx-auto" />
         ) : (
-          "إضافة التذكرة"
+          `إضافة ${formType === "service" ? "الخدمة" : "التذك��ة"}`
         )}
       </button>
     </motion.div>
