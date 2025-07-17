@@ -311,7 +311,7 @@ export default function ServiceTickets() {
                         المستحق:{" "}
                         {getFormattedBalance(
                           ticket.amountDue,
-                          user?.preferredCurrency,
+                          user?.preferredCurrency || "USD",
                         )}
                       </span>
                     </div>
