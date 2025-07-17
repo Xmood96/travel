@@ -128,6 +128,12 @@ export const ModernSelect = ({
   className = "",
   ...props
 }: SelectProps) => {
+  const {
+    onAnimationStart,
+    onAnimationEnd,
+    onAnimationIteration,
+    ...selectProps
+  } = props;
   const baseClasses =
     "transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-1 appearance-none cursor-pointer";
 
@@ -173,7 +179,7 @@ export const ModernSelect = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          {...props}
+          {...selectProps}
         >
           {placeholder && (
             <option value="" disabled>
@@ -247,6 +253,12 @@ export const ModernTextarea = ({
   className = "",
   ...props
 }: TextareaProps) => {
+  const {
+    onAnimationStart,
+    onAnimationEnd,
+    onAnimationIteration,
+    ...textareaProps
+  } = props;
   const baseClasses =
     "transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-1 resize-none";
 
@@ -292,7 +304,7 @@ export const ModernTextarea = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
         rows={4}
-        {...props}
+        {...textareaProps}
       />
       {error && (
         <motion.p
