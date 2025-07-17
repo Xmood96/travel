@@ -11,7 +11,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCurrencies, useCurrencyUtils } from "../../api/useCurrency";
 import { convertToUSD } from "../../api/currencyService";
 import { logTicketCreated } from "../../api/loggingService";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "../../api/Firebase";
 
 export default function AddTicketForm() {
@@ -61,7 +61,7 @@ export default function AddTicketForm() {
     }
   }, [user]);
 
-  // تحديث حالة الدفع عند تغيير المس��خدم المحدد (للأدمن فقط)
+  // تحديث حالة الدفع عند تغيير المس��خدم المحدد (للأدمن ف��ط)
   useEffect(() => {
     if (user?.role === "admin" && form.selectedUserId) {
       const selectedUser = users?.find((u) => u.id === form.selectedUserId);
@@ -254,7 +254,7 @@ export default function AddTicketForm() {
         );
         if (amountDueInUSD < selectedService.price) {
           return toast.error(
-            `الم��لغ المستحق يجب أن يكون أكبر من أو يساوي سع�� الخدمة (${selectedService.price} دولار)`,
+            `الم��لغ المستحق يجب أن يكون أكبر من أو يساوي سعر الخدمة (${selectedService.price} دولار)`,
           );
         }
       }
@@ -330,7 +330,7 @@ export default function AddTicketForm() {
         createdAt: new Date().toISOString(),
         createdByUserId:
           user?.role === "admin" ? form.selectedUserId : user?.id,
-        // إذا كان المستخدم المحدد ��دمن، التذكرة تصبح مدفوعة تلقائياً
+        // إذا كان المستخدم المحدد أدمن، التذكرة تصبح مدفوعة تلقائياً
         isPaid:
           user?.role === "admin"
             ? users?.find((u) => u.id === form.selectedUserId)?.role === "admin"
@@ -386,7 +386,7 @@ export default function AddTicketForm() {
         }
       }
 
-      const itemType = formType === "service" ? "الخدمة" : "التذكرة";
+      const itemType = formType === "service" ? "ال��دمة" : "التذكرة";
       toast.success(`✅ تم إضافة ${itemType} وتحديث الرصيد بنجاح!`);
 
       // إعادة تعيين النموذج
@@ -519,7 +519,7 @@ export default function AddTicketForm() {
             setForm({
               ...form,
               selectedUserId: e.target.value,
-              // إذا كان المستخدم المحدد أد����ن، جعل ��لتذكرة مدفوعة تلقائياً
+              // إذا كان المستخدم المحدد أد��ن، جعل ��لتذكرة مدفوعة تلقائياً
               isPaid: selectedUser?.role === "admin" ? true : form.isPaid,
             });
           }}
