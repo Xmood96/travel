@@ -151,7 +151,7 @@ export default function AddTicketForm() {
         className="bg-white p-4 rounded-xl shadow-md"
       >
         <div className="text-center text-orange-600">
-          <p>لا توجد بيانات وكلا�� متاحة</p>
+          <p>لا توجد بيانات وكلاء متاحة</p>
           <p className="text-sm text-gray-500 mt-1">
             يرجى إضافة وكلاء من الإعدادات أولاً
           </p>
@@ -295,7 +295,7 @@ export default function AddTicketForm() {
           agent = { id: user.id, ...newAgentData };
           console.log("تم إنشاء وكيل جديد:", agent);
 
-          // تحديث البيانات في الذاكرة
+          // ت��ديث البيانات في الذاكرة
           agentsQuery.refetch();
         } catch (error) {
           console.error("خطأ في إنشاء الوكيل:", error);
@@ -348,8 +348,9 @@ export default function AddTicketForm() {
         );
       }
 
-      // حساب الرصيد الجديد (يمكن أن يكون سالب)
-      const newBalance = agent.balance - paidAmountUSD;
+      // حساب الرصيد الجديد (يمكن أن يكون سالب) - فقط للتذاكر
+      const newBalance =
+        formType === "service" ? agent.balance : agent.balance - paidAmountUSD;
 
       const commonData = {
         ticketNumber: form.ticketNumber,
@@ -774,11 +775,11 @@ export default function AddTicketForm() {
         {formType === "service" && (
           <>
             <p className="text-green-600">
-              • <strong>للخ��مات:</strong> سعر الخدمة يُحدد تلقائياً ولا يمكن
+              • <strong>للخدمات:</strong> سعر الخدمة يُحدد تلقائياً ولا يمكن
               تعديله
             </p>
             <p className="text-green-600">
-              • <strong>للخدمات:</strong> المبلغ المستحق يجب أن يكون أكبر من أو
+              • <strong>للخدمات:</strong> ��لمبلغ المستحق يجب أن يكون أكبر من أو
               يساوي سعر ال��دمة الأساسي
             </p>
             <p className="text-green-600">
