@@ -235,7 +235,9 @@ const Chat = () => {
             ).map((msg) => (
               <div
                 key={msg.id}
-                ref={(el) => (messageRefs.current[msg.id] = el)}
+                ref={(el) => {
+                  if (el) messageRefs.current[msg.id] = el;
+                }}
                 className={`flex ${
                   msg.senderId === user?.id ? "justify-end" : "justify-start"
                 }`}
@@ -318,7 +320,7 @@ const Chat = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* مربع الرد على رسالة */}
+          {/* مربع الرد ��لى رسالة */}
           {replyTo && (
             <div className="p-2 text-sm bg-gray-200 border-l-4 border-blue-500 mb-1 mx-3 rounded">
               <div className="flex justify-between items-center">
