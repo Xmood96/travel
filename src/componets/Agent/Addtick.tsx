@@ -106,7 +106,7 @@ export default function AddTicketForm() {
   }
 
   // عرض التحميل إذا كانت البيانات الأساسية لم تُحمل بعد
-  if (agentsQuery.isLoading || !agentsQuery.data) {
+  if (agentsQuery.isLoading) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -116,6 +116,45 @@ export default function AddTicketForm() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
           <p className="text-gray-600 mt-2">جار تحميل بيانات الوكلاء...</p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // عرض خطأ إذا فشل تحميل البيانات
+  if (agentsQuery.error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-4 rounded-xl shadow-md"
+      >
+        <div className="text-center text-red-600">
+          <p>فشل في تحميل بيانات الوكلاء</p>
+          <button
+            onClick={() => agentsQuery.refetch()}
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // التحقق من وجود البيانات
+  if (!agentsQuery.data || agentsQuery.data.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-4 rounded-xl shadow-md"
+      >
+        <div className="text-center text-orange-600">
+          <p>لا توجد بيانات وكلاء متاحة</p>
+          <p className="text-sm text-gray-500 mt-1">
+            يرجى إضافة وكلاء من الإعدادات أولاً
+          </p>
         </div>
       </motion.div>
     );
@@ -683,7 +722,7 @@ export default function AddTicketForm() {
             </p>
             <p className="text-green-600">
               • <strong>للخدمات:</strong> يتم تعيين المستخدم الحالي كبائع
-              تلقائياً
+              تلقائي��ً
             </p>
           </>
         )}
