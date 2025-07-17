@@ -27,7 +27,7 @@ export default function AddTicketForm() {
     amountDue: "" as string,
     partialPayment: "" as string, // الدفع الجزئي من المستحق
     isPaid: false,
-    currency: "USD", // العملة المختارة
+    currency: "USD", // ا��عملة المختارة
     paymentType: "full" as "full" | "partial", // نوع الدفع
     serviceId: "", // للخدمات
   });
@@ -197,7 +197,7 @@ export default function AddTicketForm() {
       // الحصول عل�� بيانات الوكيل ��لمختار
       // For services, use current user as agent, for tickets use selected agent
       const agentId = formType === "service" ? user.id : form.agentId;
-      const agent = agentsQuery.data?.find((a) => a.id === agentId);
+      const agent = agentsQuery.data.find((a) => a.id === agentId);
       if (!agent) {
         toast.error(
           `لم يتم العثور على ${formType === "service" ? "��يانات المستخدم" : "البائع المحدد"}`,
@@ -592,7 +592,7 @@ export default function AddTicketForm() {
         {form.paymentType === "partial" && (
           <div className="grid grid-cols-2">
             <h1 className="text-center text-blue-800">
-              المبلغ المدفوع من المستحق
+              المبلغ الم��فوع من المستحق
             </h1>
             <input
               type="text"
@@ -624,7 +624,7 @@ export default function AddTicketForm() {
 
       {/* حالة الدفع */}
       <label className="label cursor-pointer justify-end gap-4 text-black">
-        {user?.role === "admin" ? "تم التسديد للإدارة" : "تم الدفع"}
+        {user?.role === "admin" ? "تم التسديد للإدار��" : "تم الدفع"}
         <input
           type="checkbox"
           className="checkbox text-blue-400 mx-2"
