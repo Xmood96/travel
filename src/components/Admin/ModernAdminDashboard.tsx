@@ -21,7 +21,6 @@ import SettingsComponent from "../../componets/Admin/Settings";
 import Dashboard from "../../componets/Admin/Dashboard"; // Keep the existing dashboard for stats
 
 // Modern UI Components
-import { ModernCard } from "../ui/modern/Card";
 import { IconButton } from "../ui/modern/Button";
 
 type TabType = "dashboard" | "users" | "tickets" | "services" | "settings";
@@ -209,7 +208,7 @@ export default function ModernAdminDashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          وكالة السفر
+                          و��الة السفر
                         </p>
                         <p className="text-xs text-gray-500">نسخة 2.0.0</p>
                       </div>
