@@ -132,6 +132,9 @@ export const ModernSelect = ({
     onAnimationStart,
     onAnimationEnd,
     onAnimationIteration,
+    onDragStart,
+    onDragEnd,
+    onDrag,
     ...selectProps
   } = props;
   const baseClasses =
@@ -257,6 +260,9 @@ export const ModernTextarea = ({
     onAnimationStart,
     onAnimationEnd,
     onAnimationIteration,
+    onDragStart,
+    onDragEnd,
+    onDrag,
     ...textareaProps
   } = props;
   const baseClasses =
