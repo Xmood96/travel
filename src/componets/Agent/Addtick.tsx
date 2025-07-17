@@ -140,7 +140,7 @@ export default function AddTicketForm() {
   const handleSubmit = async () => {
     // التحقق من الحقول المطلوبة بناء على نوع المستخدم
     if (!form.ticketNumber) {
-      return toast.error("يرجى تعبئة رقم التذكرة/الخد��ة");
+      return toast.error("يرجى تعبئة رقم التذكرة/الخدمة");
     }
 
     // For regular tickets, agent ID is required, for services it's auto-set to current user
@@ -454,7 +454,9 @@ export default function AddTicketForm() {
       {/* المبالغ */}
       <div className="flex flex-col gap-2">
         <div className="grid grid-cols-2">
-          <h1 className="text-center text-blue-800">المدفوع من المحفظة</h1>
+          <h1 className="text-center text-blue-800">
+            {formType === "service" ? "سعر الخدمة" : "المدفوع من المحفظة"}
+          </h1>
           <input
             type="text"
             placeholder=""
