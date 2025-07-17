@@ -22,6 +22,8 @@ const AgentDashboard = () => {
 
       case "tickets":
         return <TicketList userId={authUser?.id} />;
+      case "services":
+        return <UserServiceTickets />;
       case "profile":
         return <UserProfile />;
       default:
