@@ -267,7 +267,14 @@ export default function AddTicketForm() {
       // الحصول عل�� بيانات الوكيل ��لمختار
       // For services, use current user as agent, for tickets use selected agent
       const agentId = formType === "service" ? user.id : form.agentId;
+      console.log("البحث عن الوكيل بالمعرف:", agentId);
+      console.log(
+        "جميع الوكلاء المتاحين:",
+        agentsQuery.data.map((a) => ({ id: a.id, name: a.name })),
+      );
+
       const agent = agentsQuery.data.find((a) => a.id === agentId);
+      console.log("الوكيل الموجود:", agent);
       if (!agent) {
         toast.error(
           `لم يتم العثور على ${formType === "service" ? "��يانات المستخدم" : "البائع المحدد"}`,
@@ -573,7 +580,7 @@ export default function AddTicketForm() {
                           const newBalance =
                             selectedAgent.balance - amountInUSD;
                           toast.warn(
-                            `⚠️ سيصبح رصيد البائع: ${newBalance.toLocaleString(
+                            `⚠️ سيص��ح رصيد البائع: ${newBalance.toLocaleString(
                               "en-US",
                             )} USD`,
                           );
@@ -700,7 +707,7 @@ export default function AddTicketForm() {
           className="checkbox text-blue-400 mx-2"
           checked={form.isPaid}
           disabled={
-            form.paymentType === "partial" || // مقفل إذا كان الدفع جزئي
+            form.paymentType === "partial" || // مق��ل إذا كان الدفع جزئي
             (user?.role === "admin" &&
               users?.find((u) => u.id === form.selectedUserId)?.role ===
                 "admin")
@@ -754,7 +761,7 @@ export default function AddTicketForm() {
           والباقي يبقى كدين (لا يمكن وضع علامة "تم الدفع")
         </p>
         <p className="text-orange-600">
-          • جميع المبالغ تُحفظ بالدولار كعملة أساسية
+          • جميع المبالغ تُحفظ بالدولار كعمل�� أساسية
         </p>
       </div>
 
