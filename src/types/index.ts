@@ -98,7 +98,7 @@ export interface LogEntry {
   performedBy: string; // User ID who performed the action
   performedByName: string; // User name for display
   targetId: string; // ID of the entity being acted upon (ticket, agent, user, etc.)
-  targetType: "ticket" | "agent" | "user" | "currency";
+  targetType: "ticket" | "agent" | "user" | "currency" | "service";
   description: string; // Human-readable description of what changed
   oldValue?: any; // Previous value (for updates)
   newValue?: any; // New value (for updates)
