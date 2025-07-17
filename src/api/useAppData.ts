@@ -87,8 +87,12 @@ export const useAppData = () => {
             (t) => t.createdByUserId === user.id,
           );
 
-          // حساب المبلغ غير المدفوع مع مراعاة الدفع الجزئي
-          const unpaidAmount = userTickets
+          const userServiceTickets = serviceTickets.filter(
+            (s) => s.createdByUserId === user.id,
+          );
+
+          // حساب المبلغ غير المدفوع مع مراعاة الدفع الجزئي (تذاكر + خدمات)
+          const unpaidTicketsAmount = userTickets
             .filter((t) => !t.isPaid)
             .reduce((sum, t) => {
               const partialPayment = (t as any).partialPayment || 0;
@@ -96,17 +100,46 @@ export const useAppData = () => {
               return sum + remaining;
             }, 0);
 
-          // حساب المبلغ المدفوع (للتذاكر المدفوعة بالك��مل + الدفع الجزئي للغير مدفوعة)
-          const paidAmount = userTickets.reduce((sum, t) => {
+          const unpaidServicesAmount = userServiceTickets
+            .filter((s) => !s.isPaid)
+            .reduce((sum, s) => {
+              const partialPayment = (s as any).partialPayment || 0;
+              const remaining = s.amountDue - partialPayment;
+              return sum + remaining;
+            }, 0);
+
+          const unpaidAmount = unpaidTicketsAmount + unpaidServicesAmount;
+
+          // حساب المبلغ المدفوع (تذاكر + خدمات)
+          const paidTicketsAmount = userTickets.reduce((sum, t) => {
             if (t.isPaid) {
-              return sum + t.amountDue; // التذاكر المدفوعة بالكامل
+              return sum + t.amountDue;
             } else {
               const partialPayment = (t as any).partialPayment || 0;
-              return sum + partialPayment; // الدفع الجزئي للتذاكر غير المدفوعة
+              return sum + partialPayment;
             }
           }, 0);
 
-          const totalDue = userTickets.reduce((sum, t) => sum + t.amountDue, 0);
+          const paidServicesAmount = userServiceTickets.reduce((sum, s) => {
+            if (s.isPaid) {
+              return sum + s.amountDue;
+            } else {
+              const partialPayment = (s as any).partialPayment || 0;
+              return sum + partialPayment;
+            }
+          }, 0);
+
+          const paidAmount = paidTicketsAmount + paidServicesAmount;
+
+          const totalTicketsDue = userTickets.reduce(
+            (sum, t) => sum + t.amountDue,
+            0,
+          );
+          const totalServicesDue = userServiceTickets.reduce(
+            (sum, s) => sum + s.amountDue,
+            0,
+          );
+          const totalDue = totalTicketsDue + totalServicesDue;
 
           return {
             ...user,
