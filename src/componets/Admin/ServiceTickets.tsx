@@ -28,7 +28,7 @@ import { Modal } from "../ui/modal";
 import { Button } from "../ui/botom";
 import type { ServiceTicket, Service } from "../../types";
 import { useAuth } from "../../context/AuthContext";
-import { useCurrencies, useCurrencyUtils } from "../../api/useCurrency";
+import { useCurrencyUtils } from "../../api/useCurrency";
 import { useUsersWithStats } from "../../api/getusers";
 import { useAppData } from "../../api/useAppData";
 import { getAllServices } from "../../api/serviceService";
