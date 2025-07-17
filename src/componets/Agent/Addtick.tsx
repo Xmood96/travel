@@ -61,7 +61,7 @@ export default function AddTicketForm() {
     }
   }, [user]);
 
-  // تحديث حالة الدفع عند تغيير المستخدم المحدد (للأدمن فقط)
+  // تحديث حالة الدفع عند تغيير المس��خدم المحدد (للأدمن فقط)
   useEffect(() => {
     if (user?.role === "admin" && form.selectedUserId) {
       const selectedUser = users?.find((u) => u.id === form.selectedUserId);
@@ -147,7 +147,7 @@ export default function AddTicketForm() {
         setForm((prev) => ({
           ...prev,
           paidAmount: serviceAmountInCurrency.toString(), // Set paid amount to service price
-          agentId: user?.id || "", // Set agent ID to current user for services
+          agentId: user?.id || form.agentId, // Set agent ID to current user for services
         }));
       }
     }
@@ -200,7 +200,7 @@ export default function AddTicketForm() {
         );
         if (amountDueInUSD < selectedService.price) {
           return toast.error(
-            `المبلغ المستحق يجب أن يكون أكبر من أو يساوي سعر الخدمة (${selectedService.price} دولار)`,
+            `الم��لغ المستحق يجب أن يكون أكبر من أو يساوي سعر الخدمة (${selectedService.price} دولار)`,
           );
         }
       }
@@ -290,7 +290,7 @@ export default function AddTicketForm() {
         );
       }
 
-      // تح����ث رصيد الوكيل (حتى لو أصبح سالب)
+      // تحد��ث رصيد الوكيل (حتى لو أصبح سالب)
       await updateAgentBalance.mutateAsync({
         id: agent.id,
         newBalance,
@@ -455,7 +455,7 @@ export default function AddTicketForm() {
           }}
         >
           <option disabled value="">
-            اختر المستخدم الذي حرر{" "}
+            اختر ��لمستخدم الذي حرر{" "}
             {formType === "service" ? "��لخدمة" : "التذكرة"}
           </option>
           {users?.map((u) => (
