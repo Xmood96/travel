@@ -22,7 +22,6 @@ import {
   deleteDoc,
   doc,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import { db } from "../../api/Firebase";
 import { Modal } from "../ui/modal";
