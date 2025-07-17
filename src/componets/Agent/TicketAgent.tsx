@@ -205,7 +205,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
           onChange={(e) => setFilter(e.target.value as FilterOption)}
         >
           <option value="all">كل التذاكر</option>
-          <option value="paid">المدفوعة</option>
+          <option value="paid">المدف��عة</option>
           <option value="unpaid">الغير مدفوعة</option>
         </select>
 
@@ -240,10 +240,13 @@ export default function TicketHistory({ userId }: { userId?: string }) {
                     المستحق:{" "}
                     {getFormattedBalance(ticket.amountDue, userCurrency)}
                   </p>
-                  {ticket.partialPayment > 0 && !ticket.isPaid && (
+                  {(ticket.partialPayment || 0) > 0 && !ticket.isPaid && (
                     <p className="text-green-600">
                       دفع جزئي:{" "}
-                      {getFormattedBalance(ticket.partialPayment, userCurrency)}
+                      {getFormattedBalance(
+                        ticket.partialPayment || 0,
+                        userCurrency,
+                      )}
                     </p>
                   )}
                 </div>
