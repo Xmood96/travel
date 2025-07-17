@@ -35,7 +35,7 @@ import { getAllServices } from "../../api/serviceService";
 export default function UserServiceTickets() {
   const { user } = useAuth();
   const [serviceTickets, setServiceTickets] = useState<ServiceTicket[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const [, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "unpaid">(
@@ -145,7 +145,7 @@ export default function UserServiceTickets() {
       loadServiceTickets();
     } catch (error) {
       console.error("Error updating service ticket:", error);
-      toast.error("فشل في تحديث تذكرة الخدمة");
+      toast.error("فشل في تحديث ��ذكرة الخدمة");
     } finally {
       setUpdating(false);
     }
