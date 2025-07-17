@@ -139,7 +139,7 @@ export const logTicketCreated = async (
       action: "ticket_created",
       performedBy,
       performedByName,
-      description: `تم إنشاء التذكرة بوا��طة ${performedByName}`,
+      description: `تم إنشاء التذكرة بو����طة ${performedByName}`,
     }),
   ]);
 };
@@ -504,4 +504,71 @@ export const getActionIcon = (action: LogActionType): string => {
   };
 
   return icons[action] || "📝";
+};
+
+// Service logging utilities
+export const logServiceCreated = async (
+  serviceId: string,
+  performedBy: string,
+  performedByName: string,
+  serviceName: string,
+): Promise<void> => {
+  await createLogEntry({
+    action: "service_created" as LogActionType,
+    performedBy,
+    performedByName,
+    targetId: serviceId,
+    targetType: "service" as any,
+    description: `تم إضافة خدمة جديدة: ${serviceName}`,
+    metadata: { serviceName },
+  });
+};
+
+export const logServiceUpdated = async (
+  serviceId: string,
+  performedBy: string,
+  performedByName: string,
+  oldServiceName: string,
+  newServiceName: string,
+  oldPrice?: number,
+  newPrice?: number,
+): Promise<void> => {
+  let changes = [];
+  if (oldServiceName !== newServiceName) {
+    changes.push(`تغيير الاسم من "${oldServiceName}" إلى "${newServiceName}"`);
+  }
+  if (
+    oldPrice !== undefined &&
+    newPrice !== undefined &&
+    oldPrice !== newPrice
+  ) {
+    changes.push(`تغيير السعر من ${oldPrice} إلى ${newPrice}`);
+  }
+
+  await createLogEntry({
+    action: "service_updated" as LogActionType,
+    performedBy,
+    performedByName,
+    targetId: serviceId,
+    targetType: "service" as any,
+    description: `تم تحديث الخدمة ${newServiceName} - ${changes.join(", ")}`,
+    metadata: { oldServiceName, newServiceName, oldPrice, newPrice, changes },
+  });
+};
+
+export const logServiceDeleted = async (
+  serviceId: string,
+  performedBy: string,
+  performedByName: string,
+  serviceName: string,
+): Promise<void> => {
+  await createLogEntry({
+    action: "service_deleted" as LogActionType,
+    performedBy,
+    performedByName,
+    targetId: serviceId,
+    targetType: "service" as any,
+    description: `تم حذف الخدمة: ${serviceName}`,
+    metadata: { serviceName },
+  });
 };
