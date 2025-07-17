@@ -116,10 +116,11 @@ const Dashboard = () => {
   if (
     usersWithStatsQuery.isLoading ||
     ticketsQuery.isLoading ||
-    agentsQuery.isLoading
+    agentsQuery.isLoading ||
+    serviceTicketsQuery.isLoading
   ) {
     return (
-      <LoadingSpinner fullScreen size="lg" text="جاري تحميل لوحة التحكم..." />
+      <LoadingSpinner fullScreen size="lg" text="جاري تحميل ��وحة التحكم..." />
     );
   }
 
