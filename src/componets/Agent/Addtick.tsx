@@ -61,7 +61,7 @@ export default function AddTicketForm() {
     }
   }, [user]);
 
-  // تحديث حالة الدفع عند تغيير المس��خدم المحدد (للأدمن ف��ط)
+  // تح��يث حالة الدفع عند تغيير المس��خدم المحدد (للأدمن ف��ط)
   useEffect(() => {
     if (user?.role === "admin" && form.selectedUserId) {
       const selectedUser = users?.find((u) => u.id === form.selectedUserId);
@@ -391,11 +391,13 @@ export default function AddTicketForm() {
         );
       }
 
-      // تحد��ث رصيد الوكيل (حتى لو أصبح سالب)
-      await updateAgentBalance.mutateAsync({
-        id: agent.id,
-        newBalance,
-      });
+      // تحديث رصيد الوكيل (فقط للتذاكر، ليس للخدمات)
+      if (formType === "ticket") {
+        await updateAgentBalance.mutateAsync({
+          id: agent.id,
+          newBalance,
+        });
+      }
 
       // Log the ticket creation
       if (user && createdItem) {
@@ -417,7 +419,7 @@ export default function AddTicketForm() {
         }
       }
 
-      const itemType = formType === "service" ? "ال��دمة" : "التذكرة";
+      const itemType = formType === "service" ? "ال��دم��" : "التذكرة";
       toast.success(`✅ تم إضافة ${itemType} وتحديث الرصيد بنجاح!`);
 
       // إعادة تعيين النموذج
