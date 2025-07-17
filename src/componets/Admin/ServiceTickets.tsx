@@ -329,7 +329,7 @@ export default function ServiceTickets() {
                       دفع جزئي:{" "}
                       {getFormattedBalance(
                         ticket.partialPayment,
-                        user?.preferredCurrency,
+                        user?.preferredCurrency || "USD",
                       )}
                     </div>
                   )}
