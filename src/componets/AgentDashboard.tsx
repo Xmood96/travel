@@ -57,11 +57,16 @@ const AgentDashboard = () => {
               <p className="text-sm text-gray-500">
                 {t("welcomeMessage", { name: user?.name })}
               </p>
-              <h1 className="text-xl font-bold text-blue-400">وكالة الإحسان</h1>
+              <h1 className="text-xl font-bold text-blue-400">
+                {t("agencyName")}
+              </h1>
             </div>
           </div>
-          <div className="text-2xl text-blue-500 font-bold cursor-pointer">
-            <img className="h-18 w-18 text-blue-300" src={logo}></img>
+          <div className={`flex items-center gap-3 ${isRTL ? "" : "order-1"}`}>
+            <LanguageSwitcher />
+            <div className="text-2xl text-blue-500 font-bold cursor-pointer">
+              <img className="h-18 w-18 text-blue-300" src={logo} alt="Logo" />
+            </div>
           </div>
         </motion.div>
         {renderContent()}
