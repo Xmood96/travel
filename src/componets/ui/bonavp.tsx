@@ -1,4 +1,5 @@
 import { Home, Ticket, User, Briefcase } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Tab = "dashboard" | "tickets" | "services" | "profile";
 
@@ -8,20 +9,29 @@ interface BottomNavProps {
 }
 
 const BottomNav2 = ({ currentTab, setCurrentTab }: BottomNavProps) => {
+  const { t } = useTranslation();
+
   const navItems = [
     {
-      label: "لوحة التحكم",
+      label: t("dashboard"),
       icon: <Home className="w-5 h-5" />,
       tab: "dashboard",
     },
-
-    { label: "التذاكر", icon: <Ticket className="w-5 h-5" />, tab: "tickets" },
     {
-      label: "الخدمات",
+      label: t("tickets"),
+      icon: <Ticket className="w-5 h-5" />,
+      tab: "tickets",
+    },
+    {
+      label: t("services"),
       icon: <Briefcase className="w-5 h-5" />,
       tab: "services",
     },
-    { label: "المستخدم", icon: <User className="w-5 h-5" />, tab: "profile" },
+    {
+      label: t("profile"),
+      icon: <User className="w-5 h-5" />,
+      tab: "profile",
+    },
   ];
 
   return (
