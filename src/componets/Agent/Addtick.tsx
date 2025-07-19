@@ -195,23 +195,6 @@ export default function AddTicketForm() {
     }
   };
 
-  // Set default values for services
-  useEffect(() => {
-    if (formType === "service" && selectedService && form.currency) {
-      const selectedCurrency = getCurrencyByCode(form.currency);
-      if (selectedCurrency) {
-        const serviceAmountInCurrency = Math.ceil(
-          selectedService.price * selectedCurrency.exchangeRate,
-        );
-        setForm((prev) => ({
-          ...prev,
-          paidAmount: serviceAmountInCurrency.toString(), // Set paid amount to service price
-          agentId: user?.id || form.agentId, // Set agent ID to current user for services
-        }));
-      }
-    }
-  }, [formType, selectedService, form.currency, user?.id]);
-
   const handleSubmit = async () => {
     console.log("=== بدء معالجة النموذج ===");
     console.log("Form Type:", formType);
@@ -381,7 +364,7 @@ export default function AddTicketForm() {
         createdAt: new Date().toISOString(),
         createdByUserId:
           user?.role === "admin" ? form.selectedUserId : user?.id,
-        // إذا كان المستخدم المحدد أدمن، التذكرة تصبح مدفوعة تلقائياً
+        // إذا كان المستخدم المحدد أدمن، التذكرة تصبح مدفو��ة تلقائياً
         isPaid:
           user?.role === "admin"
             ? users?.find((u) => u.id === form.selectedUserId)?.role === "admin"
@@ -791,11 +774,11 @@ export default function AddTicketForm() {
       {/* معلومات إضافية */}
       <div className="bg-blue-50 p-3 rounded-lg text-sm">
         <p className="text-blue-700 font-semibold">ملاحظة:</p>
-        <p className="text-blue-600">• يمكن للبائع أن يصبح رصيده بالسالب</p>
+        <p className="text-blue-600">��� يمكن للبائع أن يصبح رصيده بالسالب</p>
         {user?.role === "admin" && (
           <>
             <p className="text-blue-600">
-              • {formType === "service" ? "الخدمات" : "التذاكر"} ��لمحررة م��
+              • {formType === "service" ? "الخدمات" : "التذاكر"} ��لم��ررة م��
               قبل الأدمن تُعتبر مدفوعة تل��ائياً
             </p>
             <p className="text-blue-600">
