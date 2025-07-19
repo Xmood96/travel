@@ -106,8 +106,8 @@ export const withRetry = async <T>(
 
       // Special handling for "Failed to fetch" errors
       if (
-        errorMessage.includes("Failed to fetch") ||
-        errorMessage.includes("TypeError: Failed to fetch")
+        errorInfo.message.includes("Failed to fetch") ||
+        errorInfo.message.includes("TypeError: Failed to fetch")
       ) {
         console.error("Network fetch error detected:", error);
         // Wait longer for network errors
@@ -170,7 +170,7 @@ export const setupOnlineStatusMonitoring = () => {
 
   const handleOffline = () => {
     toast.warning(
-      "تم فقدان الاتصال با��إنترنت. سيتم إعادة المحاولة عند استعادة الاتصال.",
+      "تم فقدان الاتصال بالإنترنت. سيتم إعادة المحاولة عند استعادة ��لاتصال.",
     );
   };
 
