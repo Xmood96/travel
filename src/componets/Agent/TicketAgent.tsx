@@ -101,7 +101,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
         [{ field: "isPaid", oldValue: false, newValue: true }],
       );
 
-      toast.success("تم تحديث التذكرة كمدفوعة ✅");
+      toast.success(t("ticketUpdated"));
       await refetch();
     } catch (err) {
       console.error(err);
