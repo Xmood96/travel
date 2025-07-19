@@ -1,11 +1,10 @@
 import {
   Home,
   Users,
-  Ticket,
+  ClipboardList,
   Settings,
   Activity,
   User,
-  Briefcase,
 } from "lucide-react";
 
 type Tab =
