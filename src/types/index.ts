@@ -90,7 +90,10 @@ export type LogActionType =
   | "currency_deleted"
   | "service_created"
   | "service_updated"
-  | "service_deleted";
+  | "service_deleted"
+  | "service_ticket_created"
+  | "service_ticket_updated"
+  | "service_ticket_deleted";
 
 export interface LogEntry {
   id: string;
