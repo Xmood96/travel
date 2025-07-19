@@ -1,527 +1,512 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import {
-  Briefcase,
-  Search,
-  Filter,
-  Edit,
-  DollarSign,
-  Calendar,
-  User,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Eye,
-} from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Loader2, Edit, Briefcase } from "lucide-react";
 import { toast } from "react-toastify";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  updateDoc,
-  doc,
-  where,
-} from "firebase/firestore";
+import { useQuery } from "@tanstack/react-query";
+import { getServiceTickets } from "../../api/serviceService";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../api/Firebase";
 import { Modal } from "../ui/modal";
-import { Button } from "../ui/botom";
-import type { ServiceTicket, Service } from "../../types";
+import { useCurrencies, useCurrencyUtils } from "../../api/useCurrency";
+import { convertFromUSD, convertToUSD } from "../../api/currencyService";
 import { useAuth } from "../../context/AuthContext";
-import { useCurrencyUtils } from "../../api/useCurrency";
-import { useAppData } from "../../api/useAppData";
-import { getAllServices } from "../../api/serviceService";
+import { logServiceTicketUpdated } from "../../api/loggingService";
 
-export default function UserServiceTickets() {
+const ITEMS_PER_PAGE = 5;
+
+type FilterOption = "all" | "paid" | "unpaid";
+type SortOption = "newest" | "oldest";
+
+export default function UserServiceTicketsHistory({
+  userId,
+}: {
+  userId?: string;
+}) {
   const { user } = useAuth();
-  const [serviceTickets, setServiceTickets] = useState<ServiceTicket[]>([]);
-  const [, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "unpaid">(
-    "all",
-  );
-  const [selectedTicket, setSelectedTicket] = useState<ServiceTicket | null>(
+  const serviceTicketsQuery = useQuery({
+    queryKey: ["serviceTickets", userId],
+    queryFn: getServiceTickets,
+    select: (data) =>
+      data.filter(
+        (ticket: any) => ticket.createdByUserId === (userId || user?.id),
+      ),
+  });
+
+  const [page, setPage] = useState(1);
+  const [editingServiceTicket, setEditingServiceTicket] = useState<any | null>(
     null,
   );
-  const [isViewModalOpen, setViewModalOpen] = useState(false);
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [updating, setUpdating] = useState(false);
-
-  const { agentsQuery } = useAppData();
-  const { getFormattedBalance } = useCurrencyUtils();
-
   const [editForm, setEditForm] = useState({
     partialPayment: "",
     isPaid: false,
+    amountDue: "",
+    currency: "USD",
   });
+  const { data: currencies } = useCurrencies();
+  const { getCurrencyByCode, getFormattedBalance } = useCurrencyUtils();
+  const userCurrency = user?.preferredCurrency || "USD";
+
+  const [filter, setFilter] = useState<FilterOption>("all");
+  const [sort, setSort] = useState<SortOption>("newest");
 
   useEffect(() => {
-    loadServiceTickets();
-    loadServices();
-  }, [user]);
+    if (serviceTicketsQuery.isError)
+      toast.error("حدث خطأ أثناء تحميل تذاكر الخدمات");
+  }, [serviceTicketsQuery.isError]);
 
-  const loadServices = async () => {
-    try {
-      const servicesData = await getAllServices();
-      setServices(servicesData);
-    } catch (error) {
-      console.error("Error loading services:", error);
-      toast.error("فشل في تحميل الخدمات");
-    }
-  };
-
-  const loadServiceTickets = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      let q;
-
-      if (user.role === "admin") {
-        // Admin sees all service tickets
-        q = query(
-          collection(db, "serviceTickets"),
-          orderBy("createdAt", "desc"),
-        );
-      } else {
-        // Agents see only their tickets
-        q = query(
-          collection(db, "serviceTickets"),
-          where("agentId", "==", user.id),
-          orderBy("createdAt", "desc"),
-        );
-      }
-
-      const snapshot = await getDocs(q);
-      const tickets = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as ServiceTicket[];
-      setServiceTickets(tickets);
-    } catch (error) {
-      console.error("Error loading service tickets:", error);
-      toast.error("فشل في تحميل تذاكر الخدمات");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getAgentName = (agentId: string) => {
+  if (!userId && !user?.id) {
     return (
-      agentsQuery.data?.find((agent) => agent.id === agentId)?.name ||
-      "غير معروف"
+      <div className="text-center text-gray-500">لم يتم تحديد المستخدم</div>
     );
-  };
+  }
 
-  const openViewModal = (ticket: ServiceTicket) => {
-    setSelectedTicket(ticket);
-    setViewModalOpen(true);
-  };
-
-  const openEditModal = (ticket: ServiceTicket) => {
-    setSelectedTicket(ticket);
-    setEditForm({
-      partialPayment: (ticket.partialPayment || 0).toString(),
-      isPaid: ticket.isPaid,
-    });
-    setEditModalOpen(true);
-  };
-
-  const handleUpdate = async () => {
-    if (!selectedTicket) return;
-
-    setUpdating(true);
-    try {
-      const updates = {
-        partialPayment: Number(editForm.partialPayment),
-        isPaid: editForm.isPaid,
-      };
-
-      await updateDoc(doc(db, "serviceTickets", selectedTicket.id), updates);
-      toast.success("تم تحديث تذكرة الخدمة بنجاح!");
-      setEditModalOpen(false);
-      setSelectedTicket(null);
-      loadServiceTickets();
-    } catch (error) {
-      console.error("Error updating service ticket:", error);
-      toast.error("فشل في تحديث ��ذكرة الخدمة");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const filteredTickets = serviceTickets.filter((ticket) => {
-    const matchesSearch =
-      ticket.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getAgentName(ticket.agentId)
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-    const matchesFilter =
-      filterStatus === "all" ||
-      (filterStatus === "paid" && ticket.isPaid) ||
-      (filterStatus === "unpaid" && !ticket.isPaid);
-
-    return matchesSearch && matchesFilter;
-  });
-
-  const getStatusColor = (ticket: ServiceTicket) => {
-    if (ticket.isClosed) return "text-gray-500";
-    if (ticket.isPaid) return "text-green-600";
-    if (ticket.partialPayment && ticket.partialPayment > 0)
-      return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getStatusIcon = (ticket: ServiceTicket) => {
-    if (ticket.isClosed) return <XCircle className="w-4 h-4" />;
-    if (ticket.isPaid) return <CheckCircle className="w-4 h-4" />;
-    if (ticket.partialPayment && ticket.partialPayment > 0)
-      return <Clock className="w-4 h-4" />;
-    return <XCircle className="w-4 h-4" />;
-  };
-
-  const getStatusText = (ticket: ServiceTicket) => {
-    if (ticket.isClosed) return "مغلقة";
-    if (ticket.isPaid) return "مدفوعة";
-    if (ticket.partialPayment && ticket.partialPayment > 0) return "دفع جزئي";
-    return "غير مدفوعة";
-  };
-
-  if (loading) {
+  if (serviceTicketsQuery.isLoading) {
     return (
       <div className="flex justify-center items-center py-10">
-        <div className="text-lg">جار التحميل...</div>
+        <Loader2 className="animate-spin w-6 h-6 text-primary" />
       </div>
     );
   }
 
+  const filteredServiceTickets = useMemo(() => {
+    let list = [...(serviceTicketsQuery.data || [])];
+    if (filter === "paid") list = list.filter((t) => t.isPaid);
+    else if (filter === "unpaid") list = list.filter((t) => !t.isPaid);
+
+    if (sort === "newest")
+      list.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    else
+      list.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+
+    return list;
+  }, [serviceTicketsQuery.data, filter, sort]);
+
+  const totalPages = Math.ceil(filteredServiceTickets.length / ITEMS_PER_PAGE);
+  const currentServiceTickets = filteredServiceTickets.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE,
+  );
+
+  const markServiceTicketAsPaid = async (serviceTicketId: string) => {
+    try {
+      const serviceTicket = serviceTicketsQuery.data?.find(
+        (t) => t.id === serviceTicketId,
+      );
+      if (!serviceTicket || !user) return;
+      await updateDoc(doc(db, "serviceTickets", serviceTicketId), {
+        isPaid: true,
+      });
+
+      await logServiceTicketUpdated(
+        serviceTicketId,
+        serviceTicket.ticketNumber,
+        user.id,
+        user.name,
+        [{ field: "isPaid", oldValue: false, newValue: true }],
+      );
+
+      toast.success("تم تحديث تذكرة الخدمة كمدفوعة ✅");
+      await serviceTicketsQuery.refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error("فشل في تحديث تذكرة الخدمة");
+    }
+  };
+
+  const handleEditServiceTicket = (serviceTicket: any) => {
+    setEditingServiceTicket(serviceTicket);
+    const currency = getCurrencyByCode(userCurrency);
+    if (currency) {
+      const partial = convertFromUSD(
+        serviceTicket.partialPayment || 0,
+        currency,
+      );
+      const due = convertFromUSD(serviceTicket.amountDue, currency);
+      setEditForm({
+        partialPayment: partial > 0 ? partial.toString() : "",
+        isPaid: serviceTicket.isPaid || false,
+        amountDue: due.toString(),
+        currency: userCurrency,
+      });
+    }
+  };
+
+  const handleUpdateServiceTicket = async () => {
+    if (!editingServiceTicket || !user) return;
+
+    // Check if service ticket is closed and user is not admin
+    if (editingServiceTicket.isClosed && user.role !== "admin") {
+      toast.error("لا يمكن تعديل تذكرة خدمة مغلقة");
+      setEditingServiceTicket(null);
+      return;
+    }
+
+    try {
+      const currency = getCurrencyByCode(editForm.currency);
+      if (!currency) return toast.error("يرجى اختيار عملة صحيحة");
+
+      const partial = convertToUSD(
+        Number(editForm.partialPayment || 0),
+        currency,
+      );
+      const due = convertToUSD(
+        Number(editForm.amountDue || editingServiceTicket.amountDue),
+        currency,
+      );
+
+      // Check minimum amount for service
+      if (due < editingServiceTicket.serviceBasePrice) {
+        return toast.error(
+          `المبلغ المستحق يجب أن يكون أكبر من أو يساوي سعر الخدمة (${editingServiceTicket.serviceBasePrice} دولار)`,
+        );
+      }
+
+      if (partial > due) {
+        return toast.error("الدفع الجزئي لا يمكن أن يتجاوز المبلغ المستحق");
+      }
+
+      const changes = [];
+      if (partial !== (editingServiceTicket.partialPayment || 0))
+        changes.push({
+          field: "partialPayment",
+          oldValue: editingServiceTicket.partialPayment || 0,
+          newValue: partial,
+        });
+      if (editForm.isPaid !== editingServiceTicket.isPaid)
+        changes.push({
+          field: "isPaid",
+          oldValue: editingServiceTicket.isPaid,
+          newValue: editForm.isPaid,
+        });
+      if (due !== editingServiceTicket.amountDue)
+        changes.push({
+          field: "amountDue",
+          oldValue: editingServiceTicket.amountDue,
+          newValue: due,
+        });
+
+      await updateDoc(doc(db, "serviceTickets", editingServiceTicket.id), {
+        partialPayment: partial,
+        isPaid: editForm.isPaid,
+        amountDue: due,
+      });
+
+      if (changes.length > 0) {
+        await logServiceTicketUpdated(
+          editingServiceTicket.id,
+          editingServiceTicket.ticketNumber,
+          user.id,
+          user.name,
+          changes,
+        );
+      }
+
+      toast.success("تم حفظ التغييرات");
+      setEditingServiceTicket(null);
+      await serviceTicketsQuery.refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error("حدث خطأ أثناء حفظ التعديلات");
+    }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="p-4 space-y-4 text-black"
-    >
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Briefcase className="w-6 h-6 text-green-600" />
-          {user?.role === "admin" ? "جميع تذاكر الخدمات" : "تذاكر خدماتي"}
-        </h1>
-        <div className="text-sm text-gray-600">
-          إجمالي: {serviceTickets.length} تذكرة خدمة
-        </div>
+    <div className="p-4 text-black space-y-4 max-w-md mx-auto text-right">
+      <h2 className="text-lg font-bold mb-4 gap-2 flex items-center">
+        <Briefcase className="w-5 h-5 text-green-600" />
+        سجل تذاكر الخدمات
+      </h2>
+
+      {/* فلاتر */}
+      <div className="flex flex-wrap gap-8 mb-3 justify-start">
+        <select
+          className="select-accent select select-md select-bordered bg-black/0 w-min"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as FilterOption)}
+        >
+          <option value="all">كل الخدمات</option>
+          <option value="paid">المدفوعة</option>
+          <option value="unpaid">الغير مدفوعة</option>
+        </select>
+
+        <select
+          className="select-accent select select-md select-bordered bg-black/0 w-min"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortOption)}
+        >
+          <option value="newest">الأحدث أولاً</option>
+          <option value="oldest">الأقدم أولاً</option>
+        </select>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="البحث في تذاكر الخدمات..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-400" />
-          <select
-            value={filterStatus}
-            onChange={(e) =>
-              setFilterStatus(e.target.value as "all" | "paid" | "unpaid")
-            }
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+      {/* قائمة تذاكر الخدمات */}
+      <div className="space-y-4">
+        {currentServiceTickets.map((serviceTicket) => (
+          <div
+            key={serviceTicket.id}
+            className="bg-white rounded-xl shadow-sm p-4 border border-green-200"
           >
-            <option value="all">جميع الحالات</option>
-            <option value="paid">مدفوعة</option>
-            <option value="unpaid">غير مدفوعة</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Service Tickets List */}
-      <div className="space-y-3">
-        {filteredTickets.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Briefcase className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium">لا توجد تذاكر خدمات</p>
-            <p className="text-sm">لم يتم العثور على تذاكر خدمات تطابق البحث</p>
-          </div>
-        ) : (
-          filteredTickets.map((ticket) => (
-            <motion.div
-              key={ticket.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-green-600">
-                      #{ticket.ticketNumber}
-                    </span>
-                    <span
-                      className={`flex items-center gap-1 text-sm ${getStatusColor(ticket)}`}
-                    >
-                      {getStatusIcon(ticket)}
-                      {getStatusText(ticket)}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="w-4 h-4 text-green-500" />
-                      <span>{ticket.serviceName}</span>
-                    </div>
-
-                    {user?.role === "admin" && (
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-blue-500" />
-                        <span>البائع: {getAgentName(ticket.agentId)}</span>
-                      </div>
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
+              <div className="text-right flex-1">
+                <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-green-600" />
+                  خدمة #{serviceTicket.ticketNumber}
+                </p>
+                <p className="text-sm text-green-700 font-medium mt-1">
+                  {serviceTicket.serviceName}
+                </p>
+                <div className="flex flex-wrap gap-4 mt-1 text-sm text-gray-600">
+                  <p>
+                    سعر الخدمة:{" "}
+                    {getFormattedBalance(
+                      serviceTicket.serviceBasePrice ||
+                        serviceTicket.paidAmount,
+                      userCurrency,
                     )}
-
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-yellow-500" />
-                      <span>السعر الأساسي: ${ticket.serviceBasePrice}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-red-500" />
-                      <span>
-                        المستحق:{" "}
+                  </p>
+                  <p>
+                    المستحق:{" "}
+                    {getFormattedBalance(serviceTicket.amountDue, userCurrency)}
+                  </p>
+                  {(serviceTicket.partialPayment || 0) > 0 &&
+                    !serviceTicket.isPaid && (
+                      <p className="text-green-600">
+                        دفع جزئي:{" "}
                         {getFormattedBalance(
-                          ticket.amountDue,
-                          user?.preferredCurrency || "USD",
+                          serviceTicket.partialPayment || 0,
+                          userCurrency,
                         )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-500" />
-                      <span>
-                        {new Date(ticket.createdAt).toLocaleDateString("ar-SA")}
-                      </span>
-                    </div>
-                  </div>
-
-                  {ticket.partialPayment && ticket.partialPayment > 0 && (
-                    <div className="text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-                      دفع جزئي:{" "}
-                      {getFormattedBalance(
-                        ticket.partialPayment,
-                        user?.preferredCurrency || "USD",
-                      )}
-                    </div>
-                  )}
+                      </p>
+                    )}
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => openViewModal(ticket)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="عرض التفاصيل"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  {(user?.role === "admin" || user?.role === "agent") &&
-                    !ticket.isPaid && (
+              </div>
+              <div className="text-sm space-y-2 text-right">
+                {serviceTicket.isPaid ? (
+                  <span className="text-green-600 font-semibold">
+                    ✔️ تم الدفع
+                  </span>
+                ) : (
+                  <span className="text-red-600 font-semibold">
+                    🔴 متبقي{" "}
+                    {getFormattedBalance(
+                      serviceTicket.amountDue -
+                        (serviceTicket.partialPayment || 0),
+                      userCurrency,
+                    )}
+                  </span>
+                )}
+                <div className="flex flex-wrap gap-4 justify-end my-2">
+                  {serviceTicket.isClosed ? (
+                    <span className="text-xs bg-orange-100 text-orange-800 px-3 py-1 rounded-full">
+                      تذكرة مغلقة - لا يمكن التعديل
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleEditServiceTicket(serviceTicket)}
+                      className="btn-accent btn btn-sm bg-green-500 text-white"
+                    >
+                      <Edit className="w-3 h-3" /> تعديل
+                    </button>
+                  )}
+                  {!serviceTicket.isPaid &&
+                    (serviceTicket.partialPayment || 0) === 0 && (
                       <button
-                        onClick={() => openEditModal(ticket)}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title="تحديث الدفع"
+                        onClick={() =>
+                          markServiceTicketAsPaid(serviceTicket.id)
+                        }
+                        className="btn btn-sm bg-blue-500 text-white"
                       >
-                        <Edit className="w-4 h-4" />
+                        تحديث كمدفوع
                       </button>
                     )}
                 </div>
               </div>
-            </motion.div>
-          ))
-        )}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* View Details Modal */}
+      {/* ترقيم الصفحات */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center gap-2 flex-wrap">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`btn btn-sm ${
+                page === i + 1 ? "btn-primary" : "btn-outline"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* مودال تعديل تذكرة الخدمة */}
       <Modal
-        isOpen={isViewModalOpen}
-        onClose={() => {
-          setViewModalOpen(false);
-          setSelectedTicket(null);
-        }}
-        title="تفاصيل تذكرة الخدمة"
+        isOpen={!!editingServiceTicket}
+        onClose={() => setEditingServiceTicket(null)}
+        title="تعديل تذكرة الخدمة"
       >
-        {selectedTicket && (
+        {editingServiceTicket && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="text-sm text-gray-700 mb-4">
+              <p>خدمة #{editingServiceTicket.ticketNumber}</p>
+              <p className="text-green-600 font-medium">
+                {editingServiceTicket.serviceName}
+              </p>
+            </div>
+
+            <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  رقم التذكرة
-                </label>
-                <div className="px-3 py-2 bg-gray-50 rounded-md">
-                  #{selectedTicket.ticketNumber}
-                </div>
+                <label className="block text-sm font-medium mb-1">العملة</label>
+                <select
+                  className="select bg-slate-100 select-bordered w-full"
+                  value={editForm.currency}
+                  onChange={(e) => {
+                    const newCurrency = e.target.value;
+                    const newCurrencyObj = getCurrencyByCode(newCurrency);
+                    const oldCurrencyObj = getCurrencyByCode(editForm.currency);
+                    if (!newCurrencyObj || !oldCurrencyObj) return;
+
+                    const newAmountDue = convertFromUSD(
+                      convertToUSD(Number(editForm.amountDue), oldCurrencyObj),
+                      newCurrencyObj,
+                    );
+
+                    const newPartialPayment = convertFromUSD(
+                      convertToUSD(
+                        Number(editForm.partialPayment || 0),
+                        oldCurrencyObj,
+                      ),
+                      newCurrencyObj,
+                    );
+
+                    setEditForm({
+                      ...editForm,
+                      currency: newCurrency,
+                      amountDue: newAmountDue.toFixed(2),
+                      partialPayment:
+                        newPartialPayment > 0
+                          ? newPartialPayment.toFixed(2)
+                          : "",
+                    });
+                  }}
+                >
+                  {currencies?.map((currency) => (
+                    <option key={currency.id} value={currency.code}>
+                      {currency.name} ({currency.symbol})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  الخدمة
-                </label>
-                <div className="px-3 py-2 bg-gray-50 rounded-md">
-                  {selectedTicket.serviceName}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  السعر الأساسي
-                </label>
-                <div className="px-3 py-2 bg-gray-50 rounded-md">
-                  ${selectedTicket.serviceBasePrice}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium mb-1">
                   المبلغ المستحق
                 </label>
-                <div className="px-3 py-2 bg-gray-50 rounded-md">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="input bg-slate-100 input-bordered w-full"
+                  value={editForm.amountDue}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/,/g, "");
+                    if (/^\d*\.?\d*$/.test(raw)) {
+                      setEditForm({ ...editForm, amountDue: raw });
+                    }
+                  }}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  الحد الأدنى:{" "}
                   {getFormattedBalance(
-                    selectedTicket.amountDue,
-                    user?.preferredCurrency || "USD",
+                    editingServiceTicket.serviceBasePrice ||
+                      editingServiceTicket.paidAmount,
+                    editForm.currency,
                   )}
-                </div>
+                </p>
               </div>
-
-              {selectedTicket.partialPayment &&
-                selectedTicket.partialPayment > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      الدفع الجزئي
-                    </label>
-                    <div className="px-3 py-2 bg-yellow-50 rounded-md text-yellow-800">
-                      {getFormattedBalance(
-                        selectedTicket.partialPayment,
-                        user?.preferredCurrency || "USD",
-                      )}
-                    </div>
-                  </div>
-                )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  حالة الدفع
+                <label className="block text-sm font-medium mb-1">
+                  الدفع الجزئي
                 </label>
-                <div
-                  className={`px-3 py-2 rounded-md ${getStatusColor(selectedTicket)} ${
-                    selectedTicket.isPaid ? "bg-green-50" : "bg-red-50"
-                  }`}
-                >
-                  {getStatusText(selectedTicket)}
-                </div>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="input bg-slate-100 input-bordered w-full"
+                  value={editForm.partialPayment}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/,/g, "");
+                    if (/^\d*\.?\d*$/.test(raw)) {
+                      const amountDue = Number(editForm.amountDue);
+                      if (Number(raw) > amountDue && amountDue > 0) {
+                        toast.warn(
+                          "الدفع الجزئي لا يمكن أن يتجاوز المبلغ المستحق",
+                        );
+                        return;
+                      }
+                      const newIsPaid =
+                        Number(raw) === amountDue && amountDue > 0;
+                      setEditForm({
+                        ...editForm,
+                        partialPayment: newIsPaid ? "0" : raw,
+                        isPaid: newIsPaid,
+                      });
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="checkbox"
+                  checked={editForm.isPaid}
+                  disabled={
+                    Number(editForm.partialPayment || 0) > 0 &&
+                    Number(editForm.partialPayment || 0) <
+                      Number(editForm.amountDue || 0)
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setEditForm({
+                        ...editForm,
+                        isPaid: true,
+                        partialPayment: "0",
+                      });
+                    } else {
+                      setEditForm({ ...editForm, isPaid: false });
+                    }
+                  }}
+                />
+                <label className="text-sm">مدفوعة بالكامل</label>
               </div>
             </div>
 
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setViewModalOpen(false);
-                  setSelectedTicket(null);
-                }}
+            <div className="mt-6 flex gap-3 justify-end">
+              <button
+                onClick={handleUpdateServiceTicket}
+                className="btn btn-sm btn-primary text-white"
               >
-                إغلاق
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Edit Payment Modal */}
-      <Modal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setEditModalOpen(false);
-          setSelectedTicket(null);
-        }}
-        title="تحديث دفع الخدمة"
-      >
-        {selectedTicket && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                الخدمة
-              </label>
-              <input
-                type="text"
-                value={selectedTicket.serviceName}
-                disabled
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                المبلغ المستحق:{" "}
-                {getFormattedBalance(
-                  selectedTicket.amountDue,
-                  user?.preferredCurrency || "USD",
-                )}
-              </label>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                الدفع الجزئي (USD)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={editForm.partialPayment}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, partialPayment: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                max={selectedTicket.amountDue}
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={editForm.isPaid}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, isPaid: e.target.checked })
-                  }
-                  className="rounded"
-                />
-                <span className="text-sm">تم السداد بالكامل</span>
-              </label>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setEditModalOpen(false);
-                  setSelectedTicket(null);
-                }}
+                حفظ التغييرات
+              </button>
+              <button
+                onClick={() => setEditingServiceTicket(null)}
+                className="btn btn-sm btn-ghost"
               >
                 إلغاء
-              </Button>
-              <Button onClick={handleUpdate} disabled={updating}>
-                {updating ? "جاري التحديث..." : "حفظ التعديلات"}
-              </Button>
+              </button>
             </div>
           </div>
         )}
       </Modal>
-    </motion.div>
+    </div>
   );
 }
