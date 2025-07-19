@@ -575,3 +575,80 @@ export const logServiceDeleted = async (
     metadata: { serviceName },
   });
 };
+
+// Service ticket logging utilities
+export const logServiceTicketCreated = async (
+  serviceTicketId: string,
+  serviceTicketNumber: string,
+  performedBy: string,
+  performedByName: string,
+  serviceName: string,
+): Promise<void> => {
+  await Promise.all([
+    createLogEntry({
+      action: "service_ticket_created" as LogActionType,
+      performedBy,
+      performedByName,
+      targetId: serviceTicketId,
+      targetType: "service_ticket",
+      description: `تم إنشاء تذكرة خدمة رقم ${serviceTicketNumber} للخدمة ${serviceName}`,
+      metadata: { serviceTicketNumber, serviceName },
+    }),
+    createTicketLog({
+      ticketId: serviceTicketId,
+      action: "service_ticket_created" as LogActionType,
+      performedBy,
+      performedByName,
+      description: `تم إنشاء تذكرة الخدمة بواسطة ${performedByName}`,
+    }),
+  ]);
+};
+
+export const logServiceTicketUpdated = async (
+  serviceTicketId: string,
+  serviceTicketNumber: string,
+  performedBy: string,
+  performedByName: string,
+  changes: { field: string; oldValue: any; newValue: any }[],
+): Promise<void> => {
+  const changesText = changes
+    .map((c) => `${c.field}: ${c.oldValue} → ${c.newValue}`)
+    .join(", ");
+
+  await Promise.all([
+    createLogEntry({
+      action: "service_ticket_updated" as LogActionType,
+      performedBy,
+      performedByName,
+      targetId: serviceTicketId,
+      targetType: "service_ticket",
+      description: `تم تحديث تذكرة خدمة رقم ${serviceTicketNumber} - ${changesText}`,
+      metadata: { serviceTicketNumber, changes },
+    }),
+    createTicketLog({
+      ticketId: serviceTicketId,
+      action: "service_ticket_updated" as LogActionType,
+      performedBy,
+      performedByName,
+      description: `تم تحديث التذكرة بواسطة ${performedByName} - ${changesText}`,
+    }),
+  ]);
+};
+
+export const logServiceTicketDeleted = async (
+  serviceTicketId: string,
+  serviceTicketNumber: string,
+  performedBy: string,
+  performedByName: string,
+  serviceName: string,
+): Promise<void> => {
+  await createLogEntry({
+    action: "service_ticket_deleted" as LogActionType,
+    performedBy,
+    performedByName,
+    targetId: serviceTicketId,
+    targetType: "service_ticket",
+    description: `تم حذف تذكرة خدمة رقم ${serviceTicketNumber} للخدمة ${serviceName}`,
+    metadata: { serviceTicketNumber, serviceName },
+  });
+};
