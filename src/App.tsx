@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { setupOnlineStatusMonitoring } from "./api/firebaseErrorHandler";
 import { initializeConnectionMonitoring } from "./api/firebaseConnectionDiagnostic";
 import { NetworkStatus } from "./componets/ui/NetworkStatus";
+import ConnectionRecovery from "./componets/ui/ConnectionRecovery";
 import { useTranslation } from "react-i18next";
 import "./App.css";
 
@@ -39,6 +40,7 @@ function App() {
   if (user.role === "admin") {
     return (
       <>
+        <ConnectionRecovery />
         <NetworkStatus />
         <AdminDashboard />
         <Chat />
@@ -49,6 +51,7 @@ function App() {
   if (user.role === "agent") {
     return (
       <>
+        <ConnectionRecovery />
         <NetworkStatus />
         <AgentDashboard />
         <Chat />
