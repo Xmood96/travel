@@ -206,9 +206,9 @@ export default function TicketHistory({ userId }: { userId?: string }) {
           value={filter}
           onChange={(e) => setFilter(e.target.value as FilterOption)}
         >
-          <option value="all">كل الت��اكر</option>
-          <option value="paid">المدف��عة</option>
-          <option value="unpaid">الغير مدفوعة</option>
+          <option value="all">{t("allTickets")}</option>
+          <option value="paid">{t("paidTickets")}</option>
+          <option value="unpaid">{t("unpaidTickets")}</option>
         </select>
 
         <select
