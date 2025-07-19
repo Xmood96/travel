@@ -32,28 +32,28 @@ const TicketsAndServices = () => {
 
       {/* Tab switcher */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex bg-gray-100 rounded-lg p-1 w-fit mx-auto">
+        <div className="flex bg-white/80 backdrop-blur-lg rounded-xl p-1 w-fit mx-auto border border-gray-200/50 shadow-lg">
           <button
             onClick={() => setActiveTab("tickets")}
-            className={`flex items-center justify-center gap-2 py-2 px-6 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center gap-3 py-3 px-8 rounded-lg text-sm font-medium transition-all duration-200 ${
               activeTab === "tickets"
-                ? "bg-blue-500 text-white shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
+                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md transform scale-105"
+                : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
             }`}
           >
-            <Square className="w-4 h-4" />
-            التذاكر
+            <Square className="w-5 h-5" />
+            <span className="font-semibold">التذاكر</span>
           </button>
           <button
             onClick={() => setActiveTab("services")}
-            className={`flex items-center justify-center gap-2 py-2 px-6 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center gap-3 py-3 px-8 rounded-lg text-sm font-medium transition-all duration-200 ${
               activeTab === "services"
-                ? "bg-green-500 text-white shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
+                ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md transform scale-105"
+                : "text-gray-600 hover:text-green-600 hover:bg-green-50"
             }`}
           >
-            <Briefcase className="w-4 h-4" />
-            الخدمات
+            <Briefcase className="w-5 h-5" />
+            <span className="font-semibold">الخدمات</span>
           </button>
         </div>
       </div>
