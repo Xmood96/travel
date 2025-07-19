@@ -10,21 +10,30 @@ const TicketsAndServices = () => {
   return (
     <div className="space-y-4">
       {/* Header with tabs */}
-      <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40">
+      <div className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-green-500/10 border-b border-gray-200/50 sticky top-0 z-40 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-white text-sm">📋</span>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">📋</span>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   إدارة التذاكر والخدمات
                 </h2>
-                <p className="text-xs text-gray-500 hidden sm:block">
+                <p className="text-sm text-gray-600 font-medium">
                   عرض وتحكم في جميع التذاكر والخدمات
                 </p>
               </div>
+            </div>
+            <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
+              <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-medium">
+                تذاكر
+              </span>
+              <span className="text-gray-400">+</span>
+              <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full font-medium">
+                خدمات
+              </span>
             </div>
           </div>
         </div>
