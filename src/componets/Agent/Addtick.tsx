@@ -154,7 +154,7 @@ export default function AddTicketForm() {
         className="bg-white p-4 rounded-xl shadow-md"
       >
         <div className="text-center text-orange-600">
-          <p>لا توجد بيانات وكلاء متاحة</p>
+          <p>لا توجد بيان��ت وكلاء متاحة</p>
           <p className="text-sm text-gray-500 mt-1">
             يرجى إضافة وكلاء من الإعدادات أولاً
           </p>
@@ -236,7 +236,7 @@ export default function AddTicketForm() {
 
     // للأدمن، يجب اختيار المستخدم
     if (user?.role === "admin" && !form.selectedUserId) {
-      return toast.error("يرجى اختيار الم��تخدم الذي حرر التذكرة");
+      return toast.error("يرجى اختيار المستخدم الذي حرر التذكرة");
     }
 
     if (!form.paidAmount || !form.amountDue) {
@@ -283,7 +283,7 @@ export default function AddTicketForm() {
       if (!agent && formType === "service") {
         console.log("إنشاء وكيل تلقائي للمستخدم:", user.name);
         try {
-          // إنشاء وكيل جديد للمستخدم برصيد صفر
+          // إنشاء وكيل جديد للمستخدم برصيد ص��ر
           const newAgentData = {
             name: user.name,
             balance: 0,
@@ -412,18 +412,28 @@ export default function AddTicketForm() {
             : user;
 
         if (performedByUser) {
-          await logTicketCreated(
-            (createdItem as any).id || "unknown",
-            form.ticketNumber,
-            performedByUserId || user.id,
-            performedByUser.name || user.name,
-            agent.name,
-          );
+          if (formType === "service") {
+            await logServiceTicketCreated(
+              (createdItem as any).id || "unknown",
+              form.ticketNumber,
+              performedByUserId || user.id,
+              performedByUser.name || user.name,
+              selectedService?.name || "خدمة غير محددة",
+            );
+          } else {
+            await logTicketCreated(
+              (createdItem as any).id || "unknown",
+              form.ticketNumber,
+              performedByUserId || user.id,
+              performedByUser.name || user.name,
+              agent.name,
+            );
+          }
         }
       }
 
       const itemType = formType === "service" ? "ال��د��ة" : "التذكرة";
-      toast.success(`✅ تم إضافة ${itemType} وتحديث الرص��د بنجاح!`);
+      toast.success(`✅ تم إضافة ${itemType} وتحديث الرصيد بنجاح!`);
 
       // إعادة تعيين النموذج
       setForm({
@@ -788,7 +798,7 @@ export default function AddTicketForm() {
               يساوي سعر ال��دمة الأساسي
             </p>
             <p className="text-green-600">
-              • <strong>للخدمات:</strong> يتم ��عيين المستخدم الحالي كبائع
+              • <strong>للخدمات:</strong> يتم تعيين المستخدم الحالي كبائع
               تلقائياً
             </p>
           </>
