@@ -10,8 +10,7 @@ import {
 type Tab =
   | "dashboard"
   | "users"
-  | "tickets"
-  | "services"
+  | "tickets-services"
   | "settings"
   | "logs"
   | "profile";
