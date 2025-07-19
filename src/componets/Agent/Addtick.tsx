@@ -103,6 +103,23 @@ export default function AddTicketForm() {
     }
   }, [formType, selectedService, form.currency]); // Removed getCurrencyByCode and form.amountDue from deps
 
+  // Set default values for services
+  useEffect(() => {
+    if (formType === "service" && selectedService && form.currency) {
+      const selectedCurrency = getCurrencyByCode(form.currency);
+      if (selectedCurrency) {
+        const serviceAmountInCurrency = Math.ceil(
+          selectedService.price * selectedCurrency.exchangeRate,
+        );
+        setForm((prev) => ({
+          ...prev,
+          paidAmount: serviceAmountInCurrency.toString(), // Set paid amount to service price
+          agentId: user?.id || form.agentId, // Set agent ID to current user for services
+        }));
+      }
+    }
+  }, [formType, selectedService, form.currency, user?.id]);
+
   // التحقق من الصلاحيات - يمكن للأدمن والعميل الوصول
   if (!user || (user.role !== "admin" && user.role !== "agent")) {
     return null;
