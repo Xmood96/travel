@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Loader2, Edit } from "lucide-react";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 import type { Ticket } from "../../types";
 import { useUserTickets } from "../../api/ticketbuid";
 import { doc, updateDoc } from "firebase/firestore";
@@ -19,6 +20,7 @@ type FilterOption = "all" | "paid" | "unpaid";
 type SortOption = "newest" | "oldest";
 
 export default function TicketHistory({ userId }: { userId?: string }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const {
     data: tickets,
@@ -43,12 +45,12 @@ export default function TicketHistory({ userId }: { userId?: string }) {
   const [sort, setSort] = useState<SortOption>("newest");
 
   useEffect(() => {
-    if (isError) toast.error("حدث خطأ أثناء تحميل التذاكر");
+    if (isError) toast.error(t("ticketLoadError"));
   }, [isError]);
 
   if (!userId) {
     return (
-      <div className="text-center text-gray-500">لم يتم تحديد المستخدم</div>
+      <div className="text-center text-gray-500">{t("userNotSpecified")}</div>
     );
   }
 
@@ -204,7 +206,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
           value={filter}
           onChange={(e) => setFilter(e.target.value as FilterOption)}
         >
-          <option value="all">كل التذاكر</option>
+          <option value="all">كل الت��اكر</option>
           <option value="paid">المدف��عة</option>
           <option value="unpaid">الغير مدفوعة</option>
         </select>
