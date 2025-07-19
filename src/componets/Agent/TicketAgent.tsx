@@ -44,24 +44,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
   const [filter, setFilter] = useState<FilterOption>("all");
   const [sort, setSort] = useState<SortOption>("newest");
 
-  useEffect(() => {
-    if (isError) toast.error(t("ticketLoadError"));
-  }, [isError]);
-
-  if (!userId) {
-    return (
-      <div className="text-center text-gray-500">{t("userNotSpecified")}</div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-10">
-        <Loader2 className="animate-spin w-6 h-6 text-primary" />
-      </div>
-    );
-  }
-
+  // Move ALL hooks before any conditional returns to follow Rules of Hooks
   const filteredTickets = useMemo(() => {
     let list = [...(tickets || [])];
     if (filter === "paid") list = list.filter((t) => t.isPaid);
@@ -86,6 +69,25 @@ export default function TicketHistory({ userId }: { userId?: string }) {
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE,
   );
+
+  useEffect(() => {
+    if (isError) toast.error(t("ticketLoadError"));
+  }, [isError, t]);
+
+  // Conditional returns AFTER all hooks
+  if (!userId) {
+    return (
+      <div className="text-center text-gray-500">{t("userNotSpecified")}</div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-10">
+        <Loader2 className="animate-spin w-6 h-6 text-primary" />
+      </div>
+    );
+  }
 
   const markTicketAsPaid = async (ticketId: string) => {
     try {
