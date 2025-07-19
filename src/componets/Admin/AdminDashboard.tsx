@@ -21,10 +21,8 @@ const AdminDashboard = () => {
         return <Dashboard />;
       case "users":
         return <Users />;
-      case "tickets":
-        return <Tickets />;
-      case "services":
-        return <ServiceTickets />;
+      case "tickets-services":
+        return <TicketsAndServices />;
       case "settings":
         return <Settings />;
       case "logs":
