@@ -10,6 +10,14 @@ export interface Currency {
   createdAt: string;
 }
 
+export interface Service {
+  id: string;
+  name: string; // e.g., "تأشيرة سياحية", "حجز طيران"
+  price: number; // Base price in USD
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface AppUser {
   id: string;
   name: string;
@@ -46,6 +54,22 @@ export interface Ticket {
   isClosed?: boolean;
 }
 
+export interface ServiceTicket {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  serviceBasePrice: number; // Base price of the service
+  agentId: string;
+  createdByUserId: string;
+  amountDue: number; // Amount due (must be >= serviceBasePrice)
+  isPaid: boolean;
+  paidAmount: number;
+  partialPayment?: number;
+  ticketNumber: string;
+  createdAt: string;
+  isClosed?: boolean;
+}
+
 // Logging Types
 export type LogActionType =
   | "ticket_created"
@@ -63,7 +87,13 @@ export type LogActionType =
   | "user_debt_paid_from_balance"
   | "currency_created"
   | "currency_updated"
-  | "currency_deleted";
+  | "currency_deleted"
+  | "service_created"
+  | "service_updated"
+  | "service_deleted"
+  | "service_ticket_created"
+  | "service_ticket_updated"
+  | "service_ticket_deleted";
 
 export interface LogEntry {
   id: string;
@@ -71,7 +101,13 @@ export interface LogEntry {
   performedBy: string; // User ID who performed the action
   performedByName: string; // User name for display
   targetId: string; // ID of the entity being acted upon (ticket, agent, user, etc.)
-  targetType: "ticket" | "agent" | "user" | "currency";
+  targetType:
+    | "ticket"
+    | "agent"
+    | "user"
+    | "currency"
+    | "service"
+    | "service_ticket";
   description: string; // Human-readable description of what changed
   oldValue?: any; // Previous value (for updates)
   newValue?: any; // New value (for updates)

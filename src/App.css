@@ -1,0 +1,140 @@
+/* RTL/LTR Support */
+html[dir="rtl"] {
+  text-align: right;
+}
+
+html[dir="ltr"] {
+  text-align: left;
+}
+
+/* RTL specific adjustments */
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+html[dir="rtl"] .rtl-margin-left {
+  margin-left: 0;
+  margin-right: 0.75rem;
+}
+
+html[dir="rtl"] .rtl-margin-right {
+  margin-right: 0;
+  margin-left: 0.75rem;
+}
+
+html[dir="rtl"] .rtl-padding-left {
+  padding-left: 0;
+  padding-right: 0.75rem;
+}
+
+html[dir="rtl"] .rtl-padding-right {
+  padding-right: 0;
+  padding-left: 0.75rem;
+}
+
+/* LTR specific adjustments */
+html[dir="ltr"] .ltr-margin-left {
+  margin-left: 0.75rem;
+  margin-right: 0;
+}
+
+html[dir="ltr"] .ltr-margin-right {
+  margin-right: 0.75rem;
+  margin-left: 0;
+}
+
+html[dir="ltr"] .ltr-padding-left {
+  padding-left: 0.75rem;
+  padding-right: 0;
+}
+
+html[dir="ltr"] .ltr-padding-right {
+  padding-right: 0.75rem;
+  padding-left: 0;
+}
+
+/* Toast container RTL support */
+html[dir="rtl"] .Toastify__toast-container {
+  left: 1rem;
+  right: auto;
+}
+
+html[dir="ltr"] .Toastify__toast-container {
+  right: 1rem;
+  left: auto;
+}
+
+/* Button and form elements RTL support */
+html[dir="rtl"] input,
+html[dir="rtl"] select,
+html[dir="rtl"] textarea {
+  text-align: right;
+}
+
+html[dir="ltr"] input,
+html[dir="ltr"] select,
+html[dir="ltr"] textarea {
+  text-align: left;
+}
+
+/* Navigation and flex adjustments */
+html[dir="rtl"] .flex-reverse {
+  flex-direction: row-reverse;
+}
+
+html[dir="ltr"] .flex-normal {
+  flex-direction: row;
+}
+
+/* Language switcher dropdown positioning */
+html[dir="rtl"] .dropdown-rtl {
+  left: 0;
+  right: auto;
+}
+
+html[dir="ltr"] .dropdown-ltr {
+  right: 0;
+  left: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  html[dir="rtl"] .mobile-text-right {
+    text-align: right;
+  }
+
+  html[dir="ltr"] .mobile-text-left {
+    text-align: left;
+  }
+}
+
+/* Animation direction for RTL */
+html[dir="rtl"] .slide-in-right {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+html[dir="ltr"] .slide-in-left {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

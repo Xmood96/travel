@@ -5,24 +5,42 @@ import AgentDashboard from "./componets/AgentDashboard";
 import Chat from "./componets/Chat";
 import { useEffect } from "react";
 import { setupOnlineStatusMonitoring } from "./api/firebaseErrorHandler";
+import { initializeConnectionMonitoring } from "./api/firebaseConnectionDiagnostic";
 import { NetworkStatus } from "./componets/ui/NetworkStatus";
+import ConnectionRecovery from "./componets/ui/ConnectionRecovery";
+import { useTranslation } from "react-i18next";
+import "./App.css";
 
 function App() {
   const { user, loading } = useAuth();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
 
-  // Setup online status monitoring
+  // Setup online status monitoring and connection diagnostics
   useEffect(() => {
     const cleanup = setupOnlineStatusMonitoring();
+
+    // Initialize Firebase connection monitoring
+    initializeConnectionMonitoring();
+
     return cleanup;
   }, []);
 
-  if (loading) return <div className="text-center mt-10">جاري التحميل...</div>;
+  // Update document direction when language changes
+  useEffect(() => {
+    document.documentElement.dir = isRTL ? "rtl" : "ltr";
+    document.documentElement.lang = i18n.language;
+  }, [isRTL, i18n.language]);
+
+  if (loading)
+    return <div className="text-center mt-10">{t("loading")}...</div>;
 
   if (!user) return <Login />;
 
   if (user.role === "admin") {
     return (
       <>
+        <ConnectionRecovery />
         <NetworkStatus />
         <AdminDashboard />
         <Chat />
@@ -33,6 +51,7 @@ function App() {
   if (user.role === "agent") {
     return (
       <>
+        <ConnectionRecovery />
         <NetworkStatus />
         <AgentDashboard />
         <Chat />
@@ -40,7 +59,11 @@ function App() {
     );
   }
 
-  return <div>لا يوجد دور صالح</div>;
+  return (
+    <div>
+      {t("error")}: {t("invalidRole")}
+    </div>
+  );
 }
 
 export default App;

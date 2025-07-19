@@ -77,7 +77,7 @@ export const ModernCard = ({
 };
 
 interface CardHeaderProps {
-  title: string;
+  title: ReactNode;
   subtitle?: string;
   action?: ReactNode;
   icon?: ReactNode;

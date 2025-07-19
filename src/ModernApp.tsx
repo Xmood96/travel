@@ -6,9 +6,11 @@ import Chat from "./componets/Chat";
 import { useEffect } from "react";
 import { setupOnlineStatusMonitoring } from "./api/firebaseErrorHandler";
 import { NetworkStatus } from "./componets/ui/NetworkStatus";
+import { useTranslation } from "react-i18next";
 
 function ModernApp() {
   const { user, loading } = useAuth();
+  const { t } = useTranslation();
 
   // Setup online status monitoring
   useEffect(() => {
@@ -22,9 +24,9 @@ function ModernApp() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            جاري التحميل...
+            {t("loading")}...
           </h2>
-          <p className="text-gray-600">يرجى الانتظار قليلاً</p>
+          <p className="text-gray-600">{t("pleaseWaitMoment")}</p>
         </div>
       </div>
     );
@@ -67,16 +69,14 @@ function ModernApp() {
           <span className="text-2xl">⚠️</span>
         </div>
         <h3 className="text-xl font-semibold text-red-600 mb-2">
-          دور المستخدم غير معروف
+          {t("unknownUserRole")}
         </h3>
-        <p className="text-gray-600 mb-4">
-          يرجى التواصل مع المدير لتحديد الصلاحيات
-        </p>
+        <p className="text-gray-600 mb-4">{t("contactAdminForPermissions")}</p>
         <button
           onClick={() => window.location.reload()}
           className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-medium transition-colors"
         >
-          إعادة تحميل الصفحة
+          {t("reloadPage")}
         </button>
       </div>
     </div>

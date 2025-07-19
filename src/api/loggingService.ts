@@ -391,7 +391,7 @@ export const logUserDebtPaidFromBalance = async (
   remainingBalance: number,
   currency: string,
 ): Promise<void> => {
-  const description = `تم دفع ${amountPaid} ${currency} من رصيد المستخدم ${userName} لتذكرة رقم ${ticketNumber}. الدين المتبقي: ${remainingDebt} ${currency}، الرصيد المتبقي: ${remainingBalance} ${currency}`;
+  const description = `تم دفع ${amountPaid} ${currency} من رصيد المستخدم ${userName} لت��كرة رقم ${ticketNumber}. الدين المتبقي: ${remainingDebt} ${currency}، الرصيد المتبقي: ${remainingBalance} ${currency}`;
 
   await createLogEntry({
     action: "user_debt_paid_from_balance",
@@ -501,7 +501,157 @@ export const getActionIcon = (action: LogActionType): string => {
     currency_created: "💱➕",
     currency_updated: "💱✏️",
     currency_deleted: "💱🗑️",
+    service_created: "🛎️➕",
+    service_updated: "🛎️✏️",
+    service_deleted: "🛎️🗑️",
+    service_ticket_created: "💼✅",
+    service_ticket_updated: "💼✏️",
+    service_ticket_deleted: "💼🗑️",
   };
 
   return icons[action] || "📝";
+};
+
+// Service logging utilities
+export const logServiceCreated = async (
+  serviceId: string,
+  performedBy: string,
+  performedByName: string,
+  serviceName: string,
+): Promise<void> => {
+  await createLogEntry({
+    action: "service_created" as LogActionType,
+    performedBy,
+    performedByName,
+    targetId: serviceId,
+    targetType: "service" as any,
+    description: `تم إضافة خدمة جديدة: ${serviceName}`,
+    metadata: { serviceName },
+  });
+};
+
+export const logServiceUpdated = async (
+  serviceId: string,
+  performedBy: string,
+  performedByName: string,
+  oldServiceName: string,
+  newServiceName: string,
+  oldPrice?: number,
+  newPrice?: number,
+): Promise<void> => {
+  let changes = [];
+  if (oldServiceName !== newServiceName) {
+    changes.push(`تغيير الاسم من "${oldServiceName}" إلى "${newServiceName}"`);
+  }
+  if (
+    oldPrice !== undefined &&
+    newPrice !== undefined &&
+    oldPrice !== newPrice
+  ) {
+    changes.push(`تغيير السعر من ${oldPrice} إلى ${newPrice}`);
+  }
+
+  await createLogEntry({
+    action: "service_updated" as LogActionType,
+    performedBy,
+    performedByName,
+    targetId: serviceId,
+    targetType: "service" as any,
+    description: `تم تحديث الخدمة ${newServiceName} - ${changes.join(", ")}`,
+    metadata: { oldServiceName, newServiceName, oldPrice, newPrice, changes },
+  });
+};
+
+export const logServiceDeleted = async (
+  serviceId: string,
+  performedBy: string,
+  performedByName: string,
+  serviceName: string,
+): Promise<void> => {
+  await createLogEntry({
+    action: "service_deleted" as LogActionType,
+    performedBy,
+    performedByName,
+    targetId: serviceId,
+    targetType: "service" as any,
+    description: `تم حذف الخدمة: ${serviceName}`,
+    metadata: { serviceName },
+  });
+};
+
+// Service ticket logging utilities
+export const logServiceTicketCreated = async (
+  serviceTicketId: string,
+  serviceTicketNumber: string,
+  performedBy: string,
+  performedByName: string,
+  serviceName: string,
+): Promise<void> => {
+  await Promise.all([
+    createLogEntry({
+      action: "service_ticket_created" as LogActionType,
+      performedBy,
+      performedByName,
+      targetId: serviceTicketId,
+      targetType: "service_ticket",
+      description: `تم إنشاء تذكرة خدمة رقم ${serviceTicketNumber} للخدمة ${serviceName}`,
+      metadata: { serviceTicketNumber, serviceName },
+    }),
+    createTicketLog({
+      ticketId: serviceTicketId,
+      action: "service_ticket_created" as LogActionType,
+      performedBy,
+      performedByName,
+      description: `تم إنشاء تذكرة الخدمة بواسطة ${performedByName}`,
+    }),
+  ]);
+};
+
+export const logServiceTicketUpdated = async (
+  serviceTicketId: string,
+  serviceTicketNumber: string,
+  performedBy: string,
+  performedByName: string,
+  changes: { field: string; oldValue: any; newValue: any }[],
+): Promise<void> => {
+  const changesText = changes
+    .map((c) => `${c.field}: ${c.oldValue} → ${c.newValue}`)
+    .join(", ");
+
+  await Promise.all([
+    createLogEntry({
+      action: "service_ticket_updated" as LogActionType,
+      performedBy,
+      performedByName,
+      targetId: serviceTicketId,
+      targetType: "service_ticket",
+      description: `تم تحديث تذكرة خدمة رقم ${serviceTicketNumber} - ${changesText}`,
+      metadata: { serviceTicketNumber, changes },
+    }),
+    createTicketLog({
+      ticketId: serviceTicketId,
+      action: "service_ticket_updated" as LogActionType,
+      performedBy,
+      performedByName,
+      description: `تم تحديث التذكرة بواسطة ${performedByName} - ${changesText}`,
+    }),
+  ]);
+};
+
+export const logServiceTicketDeleted = async (
+  serviceTicketId: string,
+  serviceTicketNumber: string,
+  performedBy: string,
+  performedByName: string,
+  serviceName: string,
+): Promise<void> => {
+  await createLogEntry({
+    action: "service_ticket_deleted" as LogActionType,
+    performedBy,
+    performedByName,
+    targetId: serviceTicketId,
+    targetType: "service_ticket",
+    description: `تم حذف تذكرة خدمة رقم ${serviceTicketNumber} للخدمة ${serviceName}`,
+    metadata: { serviceTicketNumber, serviceName },
+  });
 };

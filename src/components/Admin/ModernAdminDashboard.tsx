@@ -9,19 +9,21 @@ import {
   Menu,
   X,
   ChevronRight,
+  Briefcase,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Import the modern interfaces
 import ModernUsers from "./ModernUsers";
 import ModernTickets from "./ModernTickets";
+import ServiceTickets from "../../componets/Admin/ServiceTickets";
+import SettingsComponent from "../../componets/Admin/Settings";
 import Dashboard from "../../componets/Admin/Dashboard"; // Keep the existing dashboard for stats
 
 // Modern UI Components
-import { ModernCard } from "../ui/modern/Card";
 import { IconButton } from "../ui/modern/Button";
 
-type TabType = "dashboard" | "users" | "tickets" | "settings";
+type TabType = "dashboard" | "users" | "tickets" | "services" | "settings";
 
 interface Tab {
   id: TabType;
@@ -55,24 +57,16 @@ export default function ModernAdminDashboard() {
       component: <ModernTickets />,
     },
     {
+      id: "services",
+      label: "إدارة الخدمات",
+      icon: <Briefcase size={20} />,
+      component: <ServiceTickets />,
+    },
+    {
       id: "settings",
       label: "الإعدادات",
       icon: <Settings size={20} />,
-      component: (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-          <ModernCard variant="glass" size="lg" padding="lg">
-            <div className="text-center">
-              <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                صفحة الإعدادات
-              </h3>
-              <p className="text-gray-600">
-                سيتم إضافة إعدادات النظام هنا قريباً
-              </p>
-            </div>
-          </ModernCard>
-        </div>
-      ),
+      component: <SettingsComponent />,
     },
   ];
 
@@ -214,7 +208,7 @@ export default function ModernAdminDashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          وكالة السفر
+                          و��الة السفر
                         </p>
                         <p className="text-xs text-gray-500">نسخة 2.0.0</p>
                       </div>

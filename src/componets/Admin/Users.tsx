@@ -9,7 +9,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useUsersWithStats, type UserWithStats } from "../../api/getusers";
-import { useUserTickets } from "../../api/ticketbuid";
 import { Button } from "../ui/botom";
 import { Modal } from "../ui/modal";
 import { deleteDoc, doc, updateDoc, setDoc, getDoc } from "firebase/firestore";
@@ -80,7 +79,7 @@ export default function Users() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (isLoading) return <div>جار التحميل...</div>;
+  if (isLoading) return <div>ج��ر التحميل...</div>;
 
   // دالة إضافة مستخدم جديد
   const handleCreateUser = async () => {
@@ -160,7 +159,7 @@ export default function Users() {
 
       // معالجة أخطاء Firebase المختلفة
       if (error.code === "auth/email-already-in-use") {
-        setError("هذا البريد ��لإلكتروني مستخدم بالفعل.");
+        setError("هذا البريد ����لإلكتروني مستخدم بالفعل.");
       } else if (error.code === "auth/weak-password") {
         setError("كلمة المرور ضعيفة جداً.");
       } else if (error.code === "auth/invalid-email") {

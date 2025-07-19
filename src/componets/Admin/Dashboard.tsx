@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 
 import { useAppData } from "../../api/useAppData";
+import { getServiceTickets } from "../../api/serviceService";
+import { useQuery } from "@tanstack/react-query";
 import { Modal, ConfirmationModal } from "../ui/modal";
 import { Button } from "../ui/botom";
 import { toast } from "react-toastify";
@@ -41,6 +43,12 @@ const Dashboard = () => {
     createAgent,
     deleteAgent,
   } = useAppData();
+
+  // جلب الخدمات
+  const serviceTicketsQuery = useQuery({
+    queryKey: ["serviceTickets"],
+    queryFn: getServiceTickets,
+  });
 
   const [name, setName] = useState("");
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -108,7 +116,8 @@ const Dashboard = () => {
   if (
     usersWithStatsQuery.isLoading ||
     ticketsQuery.isLoading ||
-    agentsQuery.isLoading
+    agentsQuery.isLoading ||
+    serviceTicketsQuery.isLoading
   ) {
     return (
       <LoadingSpinner fullScreen size="lg" text="جاري تحميل لوحة التحكم..." />
@@ -118,7 +127,8 @@ const Dashboard = () => {
   if (
     usersWithStatsQuery.isError ||
     ticketsQuery.isError ||
-    agentsQuery.isError
+    agentsQuery.isError ||
+    serviceTicketsQuery.isError
   ) {
     return (
       <ErrorDisplay
@@ -129,7 +139,8 @@ const Dashboard = () => {
     );
   }
 
-  const totalTickets = ticketsQuery.data?.length || 0;
+  const totalTickets =
+    (ticketsQuery.data?.length || 0) + (serviceTicketsQuery.data?.length || 0);
   const totalUsers = usersWithStatsQuery.data?.length || 0;
 
   const handleAddagent = async () => {
@@ -169,20 +180,47 @@ const Dashboard = () => {
   };
 
   const allTickets = ticketsQuery.data || [];
+  const allServiceTickets = serviceTicketsQuery.data || [];
 
-  // حساب المب��لغ المالية مع مراعاة الدفع الجزئي
-  const payed = allTickets.reduce((sum, t) => sum + Number(t.paidAmount), 0);
+  // حساب المبالغ المالية مع مراعاة الدفع الجزئي (تذاكر + خدمات)
+  const ticketsPayed = allTickets.reduce(
+    (sum, t) => sum + Number(t.paidAmount),
+    0,
+  );
+  const servicesPayed = allServiceTickets.reduce(
+    (sum, s) => sum + Number(s.paidAmount),
+    0,
+  );
+  const payed = ticketsPayed + servicesPayed;
 
-  const totalDue = allTickets.reduce((sum, t) => {
+  const ticketsTotalDue = allTickets.reduce((sum, t) => {
     const partialPayment = (t as any).partialPayment || 0;
     const remaining = Number(t.amountDue) - partialPayment;
     return sum + (t.isPaid ? 0 : remaining);
   }, 0);
 
-  const totalProfit = allTickets.reduce(
+  const servicesTotalDue = allServiceTickets.reduce((sum, s) => {
+    const partialPayment = (s as any).partialPayment || 0;
+    const remaining = Number(s.amountDue) - partialPayment;
+    return sum + (s.isPaid ? 0 : remaining);
+  }, 0);
+
+  const totalDue = ticketsTotalDue + servicesTotalDue;
+
+  // حساب الربح: للتذاكر = المستحق - المدفوع من المحفظة
+  // للخدمات = المستحق - سعر الخدمة
+  const ticketsProfit = allTickets.reduce(
     (sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)),
     0,
   );
+
+  const servicesProfit = allServiceTickets.reduce(
+    (sum, s) =>
+      sum + (Number(s.amountDue) - Number(s.serviceBasePrice || s.paidAmount)),
+    0,
+  );
+
+  const totalProfit = ticketsProfit + servicesProfit;
 
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -193,21 +231,51 @@ const Dashboard = () => {
     return createdAt >= firstDayOfMonth && createdAt <= now;
   });
 
-  const thisMonthTotalDue = thisMonthTickets.reduce((sum, t) => {
+  const thisMonthServiceTickets = allServiceTickets.filter((s) => {
+    const createdAt =
+      typeof s.createdAt === "string" ? new Date(s.createdAt) : "0";
+    return createdAt >= firstDayOfMonth && createdAt <= now;
+  });
+
+  const thisMonthTicketsTotalDue = thisMonthTickets.reduce((sum, t) => {
     const partialPayment = (t as any).partialPayment || 0;
     const remaining = Number(t.amountDue) - partialPayment;
     return sum + (t.isPaid ? 0 : remaining);
   }, 0);
 
-  const thisMonthProfit = thisMonthTickets.reduce(
+  const thisMonthServicesTotalDue = thisMonthServiceTickets.reduce((sum, s) => {
+    const partialPayment = (s as any).partialPayment || 0;
+    const remaining = Number(s.amountDue) - partialPayment;
+    return sum + (s.isPaid ? 0 : remaining);
+  }, 0);
+
+  const thisMonthTotalDue =
+    thisMonthTicketsTotalDue + thisMonthServicesTotalDue;
+
+  const thisMonthTicketsProfit = thisMonthTickets.reduce(
     (sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)),
     0,
   );
 
-  const thisMonthpayed = thisMonthTickets.reduce(
+  const thisMonthServicesProfit = thisMonthServiceTickets.reduce(
+    (sum, s) =>
+      sum + (Number(s.amountDue) - Number(s.serviceBasePrice || s.paidAmount)),
+    0,
+  );
+
+  const thisMonthProfit = thisMonthTicketsProfit + thisMonthServicesProfit;
+
+  const thisMonthTicketsPayed = thisMonthTickets.reduce(
     (sum, t) => sum + Number(t.paidAmount),
     0,
   );
+
+  const thisMonthServicesPayed = thisMonthServiceTickets.reduce(
+    (sum, s) => sum + Number(s.paidAmount),
+    0,
+  );
+
+  const thisMonthpayed = thisMonthTicketsPayed + thisMonthServicesPayed;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -270,7 +338,7 @@ const Dashboard = () => {
                   <StatCard
                     title="إجمالي المستخدمين"
                     value={totalUsers}
-                    subtitle={`أصدروا ${totalTickets} تذكرة`}
+                    subtitle={`أصدروا ${totalTickets} تذكرة وخدمة`}
                     icon={<Users className="w-6 h-6 text-white" />}
                     gradient="bg-gradient-to-r from-blue-500 to-blue-600"
                     textColor="text-blue-600"
