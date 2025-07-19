@@ -105,7 +105,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
       await refetch();
     } catch (err) {
       console.error(err);
-      toast.error("فشل في تحديث التذكرة");
+      toast.error(t("ticketUpdateError"));
     }
   };
 
