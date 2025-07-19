@@ -7,6 +7,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { registerSW } from "virtual:pwa-register";
 import LoadingSpinner from "./components/LoadingSpinner.tsx";
+import "./i18n"; // Initialize i18n
 
 const App = lazy(() => import("./App.tsx"));
 
@@ -36,7 +37,9 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen bg-gradient-to-b from-gray-100 via-gray-200 to-gray-300">
-          <Suspense fallback={<LoadingSpinner />}> {/* تحميل تدريجي */}
+          <Suspense fallback={<LoadingSpinner />}>
+            {" "}
+            {/* تحميل تدريجي */}
             <div className="relative min-h-screen">
               <App />
               <ToastContainer
@@ -57,5 +60,5 @@ createRoot(document.getElementById("root")!).render(
         </div>
       </AuthProvider>
     </QueryClientProvider>
-  </StrictMode>
+  </StrictMode>,
 );
