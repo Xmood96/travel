@@ -98,7 +98,7 @@ const Login: React.FC = () => {
             }`}
             whileTap={{ scale: 0.95 }}
           >
-            {loading ? "...جاري الدخول" : "دخول"}
+            {loading ? t("loggingIn") : t("loginButton")}
           </motion.button>
         </form>
       </motion.div>
