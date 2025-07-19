@@ -391,7 +391,7 @@ export const logUserDebtPaidFromBalance = async (
   remainingBalance: number,
   currency: string,
 ): Promise<void> => {
-  const description = `تم دفع ${amountPaid} ${currency} من رصيد المستخدم ${userName} لتذكرة رقم ${ticketNumber}. الدين المتبقي: ${remainingDebt} ${currency}، الرصيد المتبقي: ${remainingBalance} ${currency}`;
+  const description = `تم دفع ${amountPaid} ${currency} من رصيد المستخدم ${userName} لت��كرة رقم ${ticketNumber}. الدين المتبقي: ${remainingDebt} ${currency}، الرصيد المتبقي: ${remainingBalance} ${currency}`;
 
   await createLogEntry({
     action: "user_debt_paid_from_balance",
