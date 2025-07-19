@@ -15,12 +15,16 @@ export const parseFirebaseError = (error: any): FirebaseErrorInfo => {
   // Check for network-related errors
   const networkErrorPatterns = [
     "fetch",
+    "Failed to fetch",
     "network",
     "offline",
     "connection",
     "timeout",
     "NETWORK_ERROR",
     "unavailable",
+    "TypeError: Failed to fetch",
+    "net::",
+    "ERR_",
   ];
 
   const isNetworkError = networkErrorPatterns.some(
@@ -45,6 +49,14 @@ export const parseFirebaseError = (error: any): FirebaseErrorInfo => {
 };
 
 export const getErrorMessage = (error: FirebaseErrorInfo): string => {
+  // Check for specific "Failed to fetch" errors
+  if (
+    error.message.includes("Failed to fetch") ||
+    error.message.includes("TypeError: Failed to fetch")
+  ) {
+    return "فشل في الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت وإعادة تحميل الصفحة.";
+  }
+
   if (error.isNetworkError) {
     return "مشكلة في الاتصال بالإنترنت. يرجى التحقق من الاتصال والمحاولة مرة أخرى.";
   }
@@ -74,6 +86,11 @@ export const withRetry = async <T>(
 ): Promise<T> => {
   let lastError: any;
 
+  // Check if we're offline before starting
+  if (!checkOnlineStatus()) {
+    throw new Error("No internet connection available");
+  }
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
@@ -81,7 +98,26 @@ export const withRetry = async <T>(
       lastError = error;
       const errorInfo = parseFirebaseError(error);
 
-      console.warn(`Attempt ${attempt}/${maxRetries} failed:`, errorInfo);
+      console.warn(`Attempt ${attempt}/${maxRetries} failed:`, {
+        ...errorInfo,
+        originalError: error,
+        isOnline: checkOnlineStatus(),
+      });
+
+      // Special handling for "Failed to fetch" errors
+      if (
+        errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("TypeError: Failed to fetch")
+      ) {
+        console.error("Network fetch error detected:", error);
+        // Wait longer for network errors
+        if (attempt < maxRetries) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, delay * attempt * 2),
+          );
+          continue;
+        }
+      }
 
       // Don't retry if it's not a retryable error
       if (!errorInfo.shouldRetry) {
@@ -134,7 +170,7 @@ export const setupOnlineStatusMonitoring = () => {
 
   const handleOffline = () => {
     toast.warning(
-      "تم فقدان الاتصال بالإنترنت. سيتم إعادة المحاولة عند استعادة الاتصال.",
+      "تم فقدان الاتصال با��إنترنت. سيتم إعادة المحاولة عند استعادة الاتصال.",
     );
   };
 
