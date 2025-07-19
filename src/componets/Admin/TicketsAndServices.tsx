@@ -68,14 +68,42 @@ const TicketsAndServices = () => {
       </div>
 
       {/* Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {activeTab === "tickets" ? <Tickets /> : <ServiceTickets />}
-      </motion.div>
+      <div className="relative overflow-hidden">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -20, scale: 0.95 }}
+          transition={{
+            duration: 0.4,
+            ease: "easeOut",
+            scale: { duration: 0.3 },
+          }}
+          className="w-full"
+        >
+          {activeTab === "tickets" ? (
+            <div className="space-y-2">
+              <div className="text-center py-2">
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                  <Square className="w-4 h-4" />
+                  عرض التذاكر
+                </span>
+              </div>
+              <Tickets />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="text-center py-2">
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium">
+                  <Briefcase className="w-4 h-4" />
+                  عرض الخدمات
+                </span>
+              </div>
+              <ServiceTickets />
+            </div>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 };
