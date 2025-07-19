@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Mail, Lock } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../api/Firebase";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./ui/LanguageSwitcher";
 
 type FormData = {
   email: string;
@@ -11,6 +13,7 @@ type FormData = {
 };
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const { register, handleSubmit } = useForm<FormData>();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,7 +23,7 @@ const Login: React.FC = () => {
     setError("");
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      console.log("تم تسجيل الدخول بنجاح!");
+      console.log(t("loginSuccess"));
       // يمكنك التوجيه هنا باستخدام useNavigate من react-router-dom
     } finally {
       setLoading(false);
@@ -35,9 +38,10 @@ const Login: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-2xl font-bold text-sky-600 mb-6 text-center">
-          تسجيل الدخول
-        </h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-sky-600">{t("loginTitle")}</h2>
+          <LanguageSwitcher />
+        </div>
 
         {error && (
           <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm text-center">
@@ -51,7 +55,7 @@ const Login: React.FC = () => {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
-              البريد الإلكتروني
+              {t("emailLabel")}
             </label>
             <div className="relative">
               <Mail
@@ -73,7 +77,7 @@ const Login: React.FC = () => {
               htmlFor="password"
               className="block text-sm font-medium text-gray-700"
             >
-              كلمة المرور
+              {t("passwordLabel")}
             </label>
             <div className="relative">
               <Lock
