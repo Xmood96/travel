@@ -10,7 +10,10 @@ import type { Ticket as TicketType, ServiceTicket, Service } from "../../types";
 import { useAuth } from "../../context/AuthContext";
 import { useCurrencies, useCurrencyUtils } from "../../api/useCurrency";
 import { convertToUSD } from "../../api/currencyService";
-import { logTicketCreated } from "../../api/loggingService";
+import {
+  logTicketCreated,
+  logServiceTicketCreated,
+} from "../../api/loggingService";
 import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "../../api/Firebase";
 
@@ -61,7 +64,7 @@ export default function AddTicketForm() {
     }
   }, [user]);
 
-  // تح��يث حالة الدفع عند تغيير المس��خدم المحدد (للأدمن ف��ط)
+  // تحديث حالة الدفع عند تغيير المس��خدم المحدد (للأدمن ف��ط)
   useEffect(() => {
     if (user?.role === "admin" && form.selectedUserId) {
       const selectedUser = users?.find((u) => u.id === form.selectedUserId);
@@ -221,7 +224,7 @@ export default function AddTicketForm() {
       return toast.error("لا توجد بيانات وكلاء متاحة. يرجى إضافة وكلاء أولاً.");
     }
 
-    // التحقق من الحقول المطلوبة بناء على نوع المستخدم
+    // التحقق ��ن الحقول المطلوبة بناء على نوع المستخدم
     if (!form.ticketNumber) {
       return toast.error("يرجى تعبئة رقم التذكرة/الخدمة");
     }
@@ -233,7 +236,7 @@ export default function AddTicketForm() {
 
     // للأدمن، يجب اختيار المستخدم
     if (user?.role === "admin" && !form.selectedUserId) {
-      return toast.error("يرجى اختيار المستخدم الذي حرر التذكرة");
+      return toast.error("يرجى اختيار الم��تخدم الذي حرر التذكرة");
     }
 
     if (!form.paidAmount || !form.amountDue) {
@@ -419,8 +422,8 @@ export default function AddTicketForm() {
         }
       }
 
-      const itemType = formType === "service" ? "ال��دم��" : "التذكرة";
-      toast.success(`✅ تم إضافة ${itemType} وتحديث الرصيد بنجاح!`);
+      const itemType = formType === "service" ? "ال��د��ة" : "التذكرة";
+      toast.success(`✅ تم إضافة ${itemType} وتحديث الرص��د بنجاح!`);
 
       // إعادة تعيين النموذج
       setForm({
@@ -785,7 +788,7 @@ export default function AddTicketForm() {
               يساوي سعر ال��دمة الأساسي
             </p>
             <p className="text-green-600">
-              • <strong>للخدمات:</strong> يتم تعيين المستخدم الحالي كبائع
+              • <strong>للخدمات:</strong> يتم ��عيين المستخدم الحالي كبائع
               تلقائياً
             </p>
           </>
