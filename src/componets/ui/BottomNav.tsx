@@ -6,6 +6,7 @@ import {
   Activity,
   User,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Tab =
   | "dashboard"
@@ -21,25 +22,39 @@ interface BottomNavProps {
 }
 
 const BottomNav = ({ currentTab, setCurrentTab }: BottomNavProps) => {
+  const { t } = useTranslation();
+
   const navItems = [
     {
-      label: "لوحة التحكم",
+      label: t("dashboard"),
       icon: <Home className="w-5 h-5" />,
       tab: "dashboard",
     },
-    { label: "المستخدمين", icon: <Users className="w-5 h-5" />, tab: "users" },
     {
-      label: "التذاكر",
+      label: t("users"),
+      icon: <Users className="w-5 h-5" />,
+      tab: "users",
+    },
+    {
+      label: t("tickets"),
       icon: <ClipboardList className="w-5 h-5" />,
       tab: "tickets-services",
     },
     {
-      label: "الإعدادات",
+      label: t("settings"),
       icon: <Settings className="w-5 h-5" />,
       tab: "settings",
     },
-    { label: "السجل", icon: <Activity className="w-5 h-5" />, tab: "logs" },
-    { label: "المستخدم", icon: <User className="w-5 h-5" />, tab: "profile" },
+    {
+      label: t("logs"),
+      icon: <Activity className="w-5 h-5" />,
+      tab: "logs",
+    },
+    {
+      label: t("profile"),
+      icon: <User className="w-5 h-5" />,
+      tab: "profile",
+    },
   ];
 
   return (
