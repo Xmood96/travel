@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { setupOnlineStatusMonitoring } from "./api/firebaseErrorHandler";
 import { NetworkStatus } from "./componets/ui/NetworkStatus";
 import { useTranslation } from "react-i18next";
+import "./App.css";
 
 function App() {
   const { user, loading } = useAuth();
