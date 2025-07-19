@@ -504,6 +504,9 @@ export const getActionIcon = (action: LogActionType): string => {
     service_created: "🛎️➕",
     service_updated: "🛎️✏️",
     service_deleted: "🛎️🗑️",
+    service_ticket_created: "💼✅",
+    service_ticket_updated: "💼✏️",
+    service_ticket_deleted: "💼🗑️",
   };
 
   return icons[action] || "📝";
