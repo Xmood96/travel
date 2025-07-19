@@ -68,7 +68,7 @@ export default function AdminLogs() {
       agent_balance_updated: "تحديث رصيد بائع",
       user_created: "إضافة مستخدم",
       user_updated: "تحديث مستخدم",
-      user_deleted: "حذف مستخدم",
+      user_deleted: "حذف مستخد��",
       user_balance_updated: "تحديث رصيد مستخدم",
       user_debt_paid_from_balance: "��فع دين من رصيد مستخدم",
       currency_created: "إضافة عملة",
@@ -77,6 +77,9 @@ export default function AdminLogs() {
       service_created: "إضافة خدمة",
       service_updated: "تحديث خدمة",
       service_deleted: "حذف خدمة",
+      service_ticket_created: "إنشاء تذكرة خدمة",
+      service_ticket_updated: "تحديث تذكرة خدمة",
+      service_ticket_deleted: "حذف تذكرة خدمة",
     };
 
     return actionNames[action] || action;
