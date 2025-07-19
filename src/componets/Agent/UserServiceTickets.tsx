@@ -53,20 +53,6 @@ export default function UserServiceTicketsHistory({
       toast.error("حدث خطأ أثناء تحميل تذاكر الخدمات");
   }, [serviceTicketsQuery.isError]);
 
-  if (!userId && !user?.id) {
-    return (
-      <div className="text-center text-gray-500">لم يتم تحديد المستخدم</div>
-    );
-  }
-
-  if (serviceTicketsQuery.isLoading) {
-    return (
-      <div className="flex justify-center items-center py-10">
-        <Loader2 className="animate-spin w-6 h-6 text-primary" />
-      </div>
-    );
-  }
-
   const filteredServiceTickets = useMemo(() => {
     let list = [...(serviceTicketsQuery.data || [])];
     if (filter === "paid") list = list.filter((t) => t.isPaid);
