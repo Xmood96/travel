@@ -216,8 +216,8 @@ export default function TicketHistory({ userId }: { userId?: string }) {
           value={sort}
           onChange={(e) => setSort(e.target.value as SortOption)}
         >
-          <option value="newest">الأحدث أولاً</option>
-          <option value="oldest">الأقدم أولاً</option>
+          <option value="newest">{t("newest")}</option>
+          <option value="oldest">{t("oldest")}</option>
         </select>
       </div>
 
@@ -439,7 +439,7 @@ export default function TicketHistory({ userId }: { userId?: string }) {
                     }
                   }}
                 />
-                <label className="text-sm">مدفوعة بالكامل</label>
+                <label className="text-sm">��دفوعة بالكامل</label>
               </div>
             </div>
 
