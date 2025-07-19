@@ -72,6 +72,20 @@ export default function UserServiceTicketsHistory({
     return list;
   }, [serviceTicketsQuery.data, filter, sort]);
 
+  if (!userId && !user?.id) {
+    return (
+      <div className="text-center text-gray-500">لم يتم تحديد المستخدم</div>
+    );
+  }
+
+  if (serviceTicketsQuery.isLoading) {
+    return (
+      <div className="flex justify-center items-center py-10">
+        <Loader2 className="animate-spin w-6 h-6 text-primary" />
+      </div>
+    );
+  }
+
   const totalPages = Math.ceil(filteredServiceTickets.length / ITEMS_PER_PAGE);
   const currentServiceTickets = filteredServiceTickets.slice(
     (page - 1) * ITEMS_PER_PAGE,
