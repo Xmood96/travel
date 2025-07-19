@@ -115,6 +115,7 @@ export const translations = {
     selectValidCurrency: "Please select a valid currency",
     cannotEditClosedTicket: "Cannot edit closed ticket",
     userNotSpecified: "User not specified",
+    invalidRole: "No valid role found",
 
     // Warnings
     partialPaymentWarning: "Partial payment cannot exceed amount due",
@@ -206,7 +207,7 @@ export const translations = {
     paid: "المدفوعة",
     unpaid: "الغير مدفوعة",
     remaining: "متبقي",
-    editTicket: "تع��يل التذكرة",
+    editTicket: "تعديل التذكرة",
     deleteTicket: "حذف التذكرة",
     markAsPaid: "تحديد كمدفوع",
     updateAsPaid: "تحديث كمدفوع",
@@ -242,7 +243,7 @@ export const translations = {
 
     // Currency
     currency: "العملة",
-    amount: "الم��لغ",
+    amount: "المبلغ",
 
     // Validation Messages
     required: "هذا الحقل مطلوب",
@@ -265,9 +266,10 @@ export const translations = {
     selectValidCurrency: "يرجى اختيار عملة صحيحة",
     cannotEditClosedTicket: "لا يمكن تعديل تذكرة مغلقة",
     userNotSpecified: "لم يتم تحديد المستخدم",
+    invalidRole: "لا يوجد دور صالح",
 
     // Warnings
-    partialPaymentWarning: "الدفع الجزئي لا يمكن أن يتجاوز المبلغ ��لمستحق",
+    partialPaymentWarning: "الدفع الجزئي لا يمكن أن يتجاوز المبلغ المستحق",
 
     // Status
     active: "نشط",
@@ -288,7 +290,7 @@ export const translations = {
     // Date and Time
     date: "التاريخ",
     time: "الوقت",
-    createdAt: "تاريخ الإنشاء",
+    createdAt: "ت��ريخ الإنشاء",
     updatedAt: "تاريخ التحديث",
 
     // Language Switcher
