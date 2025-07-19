@@ -5,6 +5,7 @@ import AgentDashboard from "./componets/AgentDashboard";
 import Chat from "./componets/Chat";
 import { useEffect } from "react";
 import { setupOnlineStatusMonitoring } from "./api/firebaseErrorHandler";
+import { initializeConnectionMonitoring } from "./api/firebaseConnectionDiagnostic";
 import { NetworkStatus } from "./componets/ui/NetworkStatus";
 import { useTranslation } from "react-i18next";
 import "./App.css";
@@ -14,9 +15,13 @@ function App() {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
 
-  // Setup online status monitoring
+  // Setup online status monitoring and connection diagnostics
   useEffect(() => {
     const cleanup = setupOnlineStatusMonitoring();
+
+    // Initialize Firebase connection monitoring
+    initializeConnectionMonitoring();
+
     return cleanup;
   }, []);
 
