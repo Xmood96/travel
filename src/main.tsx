@@ -23,14 +23,17 @@ const queryClient = new QueryClient({
   },
 });
 
-registerSW({
-  onNeedRefresh() {
-    console.log("تحديث جديد متاح");
-  },
-  onOfflineReady() {
-    console.log("جاهز للعمل بدون إنترنت");
-  },
-});
+// Initialize registerSW after i18n is loaded
+setTimeout(() => {
+  registerSW({
+    onNeedRefresh() {
+      console.log("New update available");
+    },
+    onOfflineReady() {
+      console.log("Ready to work offline");
+    },
+  });
+}, 100);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
