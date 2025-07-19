@@ -29,7 +29,7 @@ const BottomNav = ({ currentTab, setCurrentTab }: BottomNavProps) => {
     },
     { label: "المستخدمين", icon: <Users className="w-5 h-5" />, tab: "users" },
     {
-      label: "التذاكر والخدمات",
+      label: "التذاكر",
       icon: <ClipboardList className="w-5 h-5" />,
       tab: "tickets-services",
     },
