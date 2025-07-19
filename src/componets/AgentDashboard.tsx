@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logo from "../../assets/logo.png";
+import logo from "../assets/logo.png";
 import { motion } from "framer-motion";
 
 import { useAuth } from "../context/AuthContext";
