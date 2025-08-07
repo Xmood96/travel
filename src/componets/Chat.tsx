@@ -1,0 +1,408 @@
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MessageCircle, SendHorizonal, Star, Smile } from "lucide-react";
+import {
+  collection,
+  query,
+  orderBy,
+  serverTimestamp,
+  doc,
+  limitToLast,
+} from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
+import { db } from "../api/Firebase";
+import { useTranslation } from "react-i18next";
+import { safeOnSnapshot, safeAddDoc, safeUpdateDoc } from "../api/firebaseConnection";
+
+type MessageType = {
+  id: string;
+  text: string;
+  createdAt: Timestamp | null;
+  senderId: string;
+  senderName: string;
+  senderPhoto: string;
+  reactions?: { [userId: string]: string };
+  seenBy?: string[];
+  isStarred?: boolean;
+  starredBy?: string[];
+  replyTo?: {
+    id: string;
+    text: string;
+    senderName: string;
+  };
+};
+
+const Chat = () => {
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [limit, setLimit] = useState(20);
+  const chatBoxRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [replyTo, setReplyTo] = useState<null | {
+    id: string;
+    text: string;
+    senderName: string;
+  }>(null);
+  const [showStarredMessages, setShowStarredMessages] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // جلب الرسائل
+  useEffect(() => {
+    const q = query(
+      collection(db, "chat"),
+      orderBy("createdAt", "desc"),
+      limitToLast(limit),
+    );
+
+    const unsubscribe = safeOnSnapshot(
+      q,
+      (snapshot) => {
+        const msgs: MessageType[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<MessageType, "id">),
+        }));
+        setMessages(msgs.reverse()); // ترتيب من الأقدم للأحدث
+
+        if (user) {
+          const unread = msgs.filter(
+            (msg) =>
+              msg.senderId !== user.id &&
+              (!msg.seenBy || !msg.seenBy.includes(user.id)),
+          ).length;
+
+          if (!open) setUnreadCount(unread);
+        }
+      },
+      (error) => {
+        console.error("Chat messages error:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user, open, limit]);
+
+  useEffect(() => {
+    if (open && user) {
+      messages.forEach(async (msg) => {
+        if (
+          msg.senderId !== user.id &&
+          (!msg.seenBy || !msg.seenBy.includes(user.id))
+        ) {
+          const msgRef = doc(db, "chat", msg.id);
+          await safeUpdateDoc(msgRef, {
+            seenBy: [...(msg.seenBy || []), user.id],
+          });
+        }
+      });
+
+      setUnreadCount(0);
+    }
+  }, [open, user, messages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // تحميل مزيد من الرسائل عن�� التمرير لأعلى
+  useEffect(() => {
+    const handleScroll = () => {
+      if (chatBoxRef.current && chatBoxRef.current.scrollTop === 0) {
+        setLimit((prev) => prev + 10);
+      }
+    };
+
+    const ref = chatBoxRef.current;
+    if (ref) ref.addEventListener("scroll", handleScroll);
+    return () => ref?.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || !user) return;
+
+    const success = await safeAddDoc(collection(db, "chat"), {
+      text: input.trim(),
+      createdAt: serverTimestamp(),
+      senderId: user.id,
+      senderName: user.name,
+      senderPhoto: user.photoURL,
+      reactions: {},
+      seenBy: [user.id],
+      replyTo,
+    });
+
+    if (success) {
+      setInput("");
+      setReplyTo(null);
+      setShowEmojiPicker(false);
+    }
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    const messageElement = messageRefs.current[messageId];
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      messageElement.style.backgroundColor = "rgba(59, 130, 246, 0.3)";
+      setTimeout(() => {
+        messageElement.style.backgroundColor = "";
+      }, 2000);
+    }
+  };
+
+  const toggleStarMessage = async (messageId: string) => {
+    if (!user) return;
+    const message = messages.find((m) => m.id === messageId);
+    if (!message) return;
+
+    const isCurrentlyStarred = message.starredBy?.includes(user.id) || false;
+    const updatedStarredBy = isCurrentlyStarred
+      ? (message.starredBy || []).filter((id) => id !== user.id)
+      : [...(message.starredBy || []), user.id];
+
+    const msgRef = doc(db, "chat", messageId);
+    await safeUpdateDoc(msgRef, {
+      starredBy: updatedStarredBy,
+      isStarred: updatedStarredBy.length > 0,
+    });
+  };
+
+  const addEmoji = (emoji: string) => {
+    setInput((prev) => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const commonEmojis = [
+    "😀",
+    "😂",
+    "😍",
+    "😭",
+    "😱",
+    "👍",
+    "👎",
+    "❤️",
+    "🔥",
+    "🎉",
+    "👏",
+    "🙏",
+  ];
+
+  return (
+    <>
+      {/* زر فتح الشات */}
+      <button
+        className="fixed bottom-12 left-2 z-50 p-3 rounded-full bg-blue-300 text-white shadow-lg hover:bg-blue-700 transition"
+        onClick={() => setOpen(!open)}
+      >
+        <MessageCircle className="w-6 h-6" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-blue-700 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* نافذة الشات */}
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-20 right-4 w-[90%] max-w-sm bg-white border rounded-2xl shadow-2xl z-50 flex flex-col h-[450px]"
+        >
+          {/* الرأس */}
+          <div className="p-3 border-b text-base font-semibold bg-blue-300 text-white rounded-t-2xl flex justify-between items-center">
+            <span>
+              {showStarredMessages ? t("starredMessagesTitle") : t("groupChat")}
+            </span>
+            <button
+              onClick={() => setShowStarredMessages(!showStarredMessages)}
+              className="p-1 rounded-full hover:bg-blue-400 transition-colors"
+              title={t("starredMessagesTitle")}
+            >
+              <Star
+                className={`w-5 h-5 ${
+                  messages.some((m) => m.starredBy?.includes(user?.id || ""))
+                    ? "fill-yellow-300 text-yellow-300"
+                    : "text-white"
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* صندوق الرسائل */}
+          <div
+            ref={chatBoxRef}
+            className="flex-1 overflow-y-auto px-3 py-2 space-y-2 bg-slate-300"
+          >
+            {(showStarredMessages
+              ? messages.filter((m) => m.starredBy?.includes(user?.id || ""))
+              : messages
+            ).map((msg) => (
+              <div
+                key={msg.id}
+                ref={(el) => {
+                  if (el) messageRefs.current[msg.id] = el;
+                }}
+                className={`flex ${
+                  msg.senderId === user?.id ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div className="flex items-end gap-2 max-w-[75%] group">
+                  {msg.senderId !== user?.id && (
+                    <img
+                      src={msg.senderPhoto}
+                      alt={msg.senderName}
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  )}
+                  <div className="relative">
+                    <div
+                      onDoubleClick={() =>
+                        setReplyTo({
+                          id: msg.id,
+                          text: msg.text,
+                          senderName: msg.senderName,
+                        })
+                      }
+                      className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow relative cursor-pointer transition-all
+                        ${
+                          msg.senderId === user?.id
+                            ? "bg-blue-300 text-black rounded-br-none"
+                            : "bg-gray-200 text-gray-900 rounded-bl-none"
+                        }`}
+                    >
+                      {msg.replyTo && (
+                        <div
+                          onClick={() => scrollToMessage(msg.replyTo!.id)}
+                          className="text-xs text-gray-600 border-l-2 pl-2 mb-1 border-blue-500 cursor-pointer hover:bg-blue-50 rounded p-1 transition-colors"
+                        >
+                          ردًا على: <strong>{msg.replyTo.senderName}</strong> —
+                          "{msg.replyTo.text.slice(0, 40)}..."
+                        </div>
+                      )}
+                      {msg.senderId !== user?.id && (
+                        <div className="text-xs font-semibold text-gray-500 mb-1">
+                          {msg.senderName}
+                        </div>
+                      )}
+                      {msg.text}
+
+                      {msg.senderId === user?.id &&
+                        (msg.seenBy?.length || 0) > 1 && (
+                          <div className="text-[10px] text-gray-500 mt-1">
+                            تمت القراءة
+                          </div>
+                        )}
+                    </div>
+
+                    {/* زر النجمة */}
+                    <button
+                      onClick={() => toggleStarMessage(msg.id)}
+                      className={`absolute -top-2 ${msg.senderId === user?.id ? "-left-2" : "-right-2"} 
+                        opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-1 shadow-md hover:bg-gray-50`}
+                      title="تعليم بنجمة"
+                    >
+                      <Star
+                        className={`w-3 h-3 ${
+                          msg.starredBy?.includes(user?.id || "")
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-400"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {showStarredMessages &&
+              messages.filter((m) => m.starredBy?.includes(user?.id || ""))
+                .length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  <Star className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>لا توجد رسائل معلمة بنجمة</p>
+                </div>
+              )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* مربع الرد ��لى رسالة */}
+          {replyTo && (
+            <div className="p-2 text-sm bg-gray-200 border-l-4 border-blue-500 mb-1 mx-3 rounded">
+              <div className="flex justify-between items-center">
+                <span>
+                  الرد على <strong>{replyTo.senderName}</strong>: "
+                  {replyTo.text.slice(0, 50)}..."
+                </span>
+                <button
+                  onClick={() => setReplyTo(null)}
+                  className="text-xs text-red-500 ml-4"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* منتقي الإيموجي */}
+          <AnimatePresence>
+            {showEmojiPicker && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="absolute bottom-16 right-3 bg-white border rounded-lg shadow-lg p-3 grid grid-cols-6 gap-2 z-10"
+              >
+                {commonEmojis.map((emoji, index) => (
+                  <button
+                    key={index}
+                    onClick={() => addEmoji(emoji)}
+                    className="text-xl hover:bg-gray-100 rounded p-1 transition-colors"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* إدخال الرسالة */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="flex items-center border-t px-2 py-2 bg-blue-300 relative"
+          >
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="p-2 text-blue-700 hover:bg-blue-200 rounded-full transition-colors"
+              title={t("addEmoji")}
+            >
+              <Smile className="w-5 h-5" />
+            </button>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={t("typeYourMessage")}
+              className="flex-1 px-3 py-2 rounded-full border bg-gray-200 text-black focus:outline-none mx-2"
+            />
+            <button
+              type="submit"
+              className="p-2 text-blue-700 hover:bg-blue-200 rounded-full transition-colors"
+            >
+              <SendHorizonal className="w-5 h-5" />
+            </button>
+          </form>
+        </motion.div>
+      )}
+    </>
+  );
+};
+
+export default Chat;
