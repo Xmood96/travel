@@ -602,7 +602,9 @@ export default function AddTicketForm() {
           </option>
           {agentsQuery.data?.map((agent) => (
             <option key={agent.id} value={agent.id}>
-              {agent.name} ({t("balance")}: {agent.balance.toLocaleString("en-US")} USD)
+              {agent.id === "f2r8ApzPMwpNglkFcghz"
+                ? agent.name
+                : `${agent.name} (${t("balance")}: ${agent.balance.toLocaleString("en-US")} USD)`}
             </option>
           ))}
         </select>
@@ -635,7 +637,7 @@ export default function AddTicketForm() {
                       );
 
                       const selectedCurrency = getCurrencyByCode(form.currency);
-                      if (selectedAgent && selectedCurrency) {
+                      if (selectedAgent && selectedCurrency && selectedAgent.id !== "f2r8ApzPMwpNglkFcghz") {
                         const amountInUSD = convertToUSD(
                           Number(raw) || 0,
                           selectedCurrency,
@@ -776,7 +778,7 @@ export default function AddTicketForm() {
           className="checkbox text-blue-400 mx-2"
           checked={form.isPaid}
           disabled={
-            form.paymentType === "partial" || // مق��ل إذا ك��ن الدفع جزئي
+            form.paymentType === "partial" || // مق��ل إذا ����ن الدفع جزئي
             (user?.role === "admin" &&
               users?.find((u) => u.id === form.selectedUserId)?.role ===
                 "admin")
