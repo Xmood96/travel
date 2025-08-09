@@ -210,19 +210,18 @@ const Dashboard = () => {
 
   // حساب ��لربح: للتذاكر = المستحق - المدفوع من المح��ظة
   // للخدمات = المستحق - سعر الخدمة
-  const ticketsProfit = allTickets.reduce(
-    (sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)),
-    0,
-  );
+  // استثناء التذاكر التي agentId = "f2r8ApzPMwpNglkFcghz" من الربح
+  const ticketsProfit = allTickets
+    .filter(t => t.agentId !== "f2r8ApzPMwpNglkFcghz")
+    .reduce((sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)), 0);
 
-  const servicesProfit = allServiceTickets.reduce(
-    (sum, s) => {
+  const servicesProfit = allServiceTickets
+    .filter(s => s.agentId !== "f2r8ApzPMwpNglkFcghz")
+    .reduce((sum, s) => {
       const quantity = s.quantity || 1;
       const totalServiceCost = Number(s.serviceBasePrice) * quantity;
       return sum + (Number(s.amountDue) - totalServiceCost);
-    },
-    0,
-  );
+    }, 0);
 
   const totalProfit = ticketsProfit + servicesProfit;
 
