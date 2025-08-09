@@ -208,7 +208,7 @@ const Dashboard = () => {
 
   const totalDue = ticketsTotalDue + servicesTotalDue;
 
-  // حساب ��لربح: للتذاكر = المستحق - المدفوع من المح��ظة
+  // حساب ��لربح: للتذاكر = المستحق - المدفوع من المح���ظة
   // للخدمات = المستحق - سعر الخدمة
   // استثناء التذاكر التي agentId = "f2r8ApzPMwpNglkFcghz" من الربح
   const ticketsProfit = allTickets
@@ -269,15 +269,13 @@ const Dashboard = () => {
 
   const thisMonthProfit = thisMonthTicketsProfit + thisMonthServicesProfit;
 
-  const thisMonthTicketsPayed = thisMonthTickets.reduce(
-    (sum, t) => sum + Number(t.paidAmount),
-    0,
-  );
+  const thisMonthTicketsPayed = thisMonthTickets
+    .filter(t => t.agentId !== "f2r8ApzPMwpNglkFcghz")
+    .reduce((sum, t) => sum + Number(t.paidAmount), 0);
 
-  const thisMonthServicesPayed = thisMonthServiceTickets.reduce(
-    (sum, s) => sum + Number(s.paidAmount),
-    0,
-  );
+  const thisMonthServicesPayed = thisMonthServiceTickets
+    .filter(s => s.agentId !== "f2r8ApzPMwpNglkFcghz")
+    .reduce((sum, s) => sum + Number(s.paidAmount), 0);
 
   const thisMonthpayed = thisMonthTicketsPayed + thisMonthServicesPayed;
 
