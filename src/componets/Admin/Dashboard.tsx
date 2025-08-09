@@ -185,14 +185,13 @@ const Dashboard = () => {
   const allServiceTickets = serviceTicketsQuery.data || [];
 
   // حساب المبالغ المالية مع مراعاة الدفع الجزئي (تذاكر + خدمات)
-  const ticketsPayed = allTickets.reduce(
-    (sum, t) => sum + Number(t.paidAmount),
-    0,
-  );
-  const servicesPayed = allServiceTickets.reduce(
-    (sum, s) => sum + Number(s.paidAmount),
-    0,
-  );
+  // استثناء التذاكر التي agentId = "f2r8ApzPMwpNglkFcghz" من المدفوع
+  const ticketsPayed = allTickets
+    .filter(t => t.agentId !== "f2r8ApzPMwpNglkFcghz")
+    .reduce((sum, t) => sum + Number(t.paidAmount), 0);
+  const servicesPayed = allServiceTickets
+    .filter(s => s.agentId !== "f2r8ApzPMwpNglkFcghz")
+    .reduce((sum, s) => sum + Number(s.paidAmount), 0);
   const payed = ticketsPayed + servicesPayed;
 
   const ticketsTotalDue = allTickets.reduce((sum, t) => {
