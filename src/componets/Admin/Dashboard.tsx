@@ -208,7 +208,7 @@ const Dashboard = () => {
 
   const totalDue = ticketsTotalDue + servicesTotalDue;
 
-  // حساب ��لربح: للتذاكر = المستحق - المدفوع من المح���ظة
+  // حساب ��لربح: للتذاكر = المستحق - المدفوع من المح��ظة
   // للخدمات = المستحق - سعر الخدمة
   // استثناء التذاكر التي agentId = "f2r8ApzPMwpNglkFcghz" من الربح
   const ticketsProfit = allTickets
@@ -480,7 +480,7 @@ const Dashboard = () => {
                 transition={{ duration: 0.3 }}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
-                {agentsQuery.data?.map((agent, index) => (
+                {agentsQuery.data?.filter(agent => agent.id !== "f2r8ApzPMwpNglkFcghz").map((agent, index) => (
                   <motion.div
                     key={agent.id}
                     initial={{ opacity: 0, y: 20 }}
