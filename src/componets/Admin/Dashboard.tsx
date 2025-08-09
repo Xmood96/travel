@@ -255,19 +255,17 @@ const Dashboard = () => {
   const thisMonthTotalDue =
     thisMonthTicketsTotalDue + thisMonthServicesTotalDue;
 
-  const thisMonthTicketsProfit = thisMonthTickets.reduce(
-    (sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)),
-    0,
-  );
+  const thisMonthTicketsProfit = thisMonthTickets
+    .filter(t => t.agentId !== "f2r8ApzPMwpNglkFcghz")
+    .reduce((sum, t) => sum + (Number(t.amountDue) - Number(t.paidAmount)), 0);
 
-  const thisMonthServicesProfit = thisMonthServiceTickets.reduce(
-    (sum, s) => {
+  const thisMonthServicesProfit = thisMonthServiceTickets
+    .filter(s => s.agentId !== "f2r8ApzPMwpNglkFcghz")
+    .reduce((sum, s) => {
       const quantity = s.quantity || 1;
       const totalServiceCost = Number(s.serviceBasePrice) * quantity;
       return sum + (Number(s.amountDue) - totalServiceCost);
-    },
-    0,
-  );
+    }, 0);
 
   const thisMonthProfit = thisMonthTicketsProfit + thisMonthServicesProfit;
 
